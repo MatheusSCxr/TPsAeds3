@@ -1,30 +1,33 @@
 //campos do csv:
 //appid,name,release_date,english,developer,publisher,platforms,required_age,categories,genres,steamspy_tags,achievements,positive_ratings,negative_ratings,average_playtime,median_playtime,owners,price
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SteamGame {
-    protected int appid;
-    protected String name; //tamanho variável
-    protected String release_date; //data, no formato ano-mes-dia
-    protected Boolean english; //boolean (0 ou 1)
-    protected String developer; //tamanho variável
-    protected String publisher; //tamanho variável
-    protected String platforms; //string de tamanho fixo ("windows")
-    protected int required_age;
-    protected List<String> categories;  //lista de tamanho variável
-    protected List<String> genres;  //lista de tamanho variável
-    protected List<String> steamspy_tags;   //lista de tamanho variável
-    protected int achievements;
-    protected int positive_ratings;
-    protected int negative_ratings;
-    protected int average_playtime;
-    protected int median_playtime;
-    protected String owners; //tamanho variável (intervalo de números inteiros)
-    protected float price;
+    private int id; //id usado no arquivo de registros
+    private int appid;
+    private String name; //tamanho variável
+    private String release_date; //data, no formato ano-mes-dia
+    private Boolean english; //boolean (0 ou 1)
+    private String developer; //tamanho variável
+    private String publisher; //tamanho variável
+    private String platforms; //string de tamanho fixo ("windows")
+    private int required_age;
+    private List<String> categories;  //lista de tamanho variável
+    private List<String> genres;  //lista de tamanho variável
+    private List<String> steamspy_tags;   //lista de tamanho variável
+    private int achievements;
+    private int positive_ratings;
+    private int negative_ratings;
+    private int average_playtime;
+    private int median_playtime;
+    private String owners; //tamanho variável (intervalo de números inteiros)
+    private float price;
 
     //construtor (vazio)
     public SteamGame(){
+        this.id = -1;
         this.appid = -1;
         this.name = "Space War";
         this.release_date = "0000-01-01";
@@ -33,8 +36,11 @@ public class SteamGame {
         this.publisher = "Valve";
         this.platforms = "linux";
         this.required_age = 0;
+        this.categories = new ArrayList<>();
         this.categories.add("Single-player");
+        this.genres = new ArrayList<>();
         this.genres.add("Action");
+        this.steamspy_tags = new ArrayList<>();
         this.steamspy_tags.add("FPS");
         this.achievements = -1;
         this.positive_ratings = 0;
@@ -43,10 +49,12 @@ public class SteamGame {
         this.median_playtime = 0;
         this.owners = "1 (Gabe)";
         this.price = 0;  
+
     }
 
     //construtor (recebendo List<String> como parâmetro)
-    public SteamGame(int appid, String name, String release_date, Boolean english, String developer, String publisher, String platforms, int required_age, List<String> categories, List<String> genres, List<String> steamspy_tags, int achievements, int positive_ratings, int negative_ratings, int average_playtime, int median_playtime, String owners, float price) {
+    public SteamGame(int id, int appid, String name, String release_date, Boolean english, String developer, String publisher, String platforms, int required_age, List<String> categories, List<String> genres, List<String> steamspy_tags, int achievements, int positive_ratings, int negative_ratings, int average_playtime, int median_playtime, String owners, float price) {
+        this.id = id;
         this.appid = appid;
         this.name = name;
         this.release_date = release_date;
@@ -65,6 +73,192 @@ public class SteamGame {
         this.median_playtime = median_playtime;
         this.owners = owners;
         this.price = price;
+    }
+
+    public int getId(){
+        return id;
+    }
+
+    public boolean setId(int id){
+        boolean response = false;
+        //verificação de id diferente do id atual
+        if (id != this.id && id > 0){
+            this.id = id;
+            response = true;
+        }
+        return response;
+    }
+    
+    public int getAppid() {
+        return appid;
+    }
+
+    public void setAppid(int appid) {
+        this.appid = appid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getReleaseDate() {
+        return release_date;
+    }
+
+    public void setReleaseDate(String release_date) {
+        this.release_date = release_date;
+    }
+
+    public Boolean getEnglish() {
+        return english;
+    }
+
+    public void setEnglish(Boolean english) {
+        this.english = english;
+    }
+
+    public String getDeveloper() {
+        return developer;
+    }
+
+    public void setDeveloper(String developer) {
+        this.developer = developer;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getPlatforms() {
+        return platforms;
+    }
+
+    public void setPlatforms(String platforms) {
+        this.platforms = platforms;
+    }
+
+    public int getRequiredAge() {
+        return required_age;
+    }
+
+    public void setRequiredAge(int required_age) {
+        this.required_age = required_age;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
+    }
+
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
+    }
+
+    public List<String> getSteamspyTags() {
+        return steamspy_tags;
+    }
+
+    public void setSteamspyTags(List<String> steamspy_tags) {
+        this.steamspy_tags = steamspy_tags;
+    }
+
+    public int getAchievements() {
+        return achievements;
+    }
+
+    public void setAchievements(int achievements) {
+        this.achievements = achievements;
+    }
+
+    public int getPositiveRatings() {
+        return positive_ratings;
+    }
+
+    public void setPositiveRatings(int positive_ratings) {
+        this.positive_ratings = positive_ratings;
+    }
+
+    public int getNegativeRatings() {
+        return negative_ratings;
+    }
+
+    public void setNegativeRatings(int negative_ratings) {
+        this.negative_ratings = negative_ratings;
+    }
+
+    public int getAveragePlaytime() {
+        return average_playtime;
+    }
+
+    public void setAveragePlaytime(int average_playtime) {
+        this.average_playtime = average_playtime;
+    }
+
+    public int getMedianPlaytime() {
+        return median_playtime;
+    }
+
+    public void setMedianPlaytime(int median_playtime) {
+        this.median_playtime = median_playtime;
+    }
+
+    public String getOwners() {
+        return owners;
+    }
+
+    public void setOwners(String owners) {
+        this.owners = owners;
+    }
+
+    public float getPrice() {
+        return this.price;
+    }
+
+    public void printAll() {
+        System.out.println("--------------- VALORES RESGISTRADOS ---------------");
+        System.out.println("ID: " + id);
+        System.out.println("App ID: " + appid);
+        System.out.println("Nome: " + name);
+        System.out.println("Data de Lançamento: " + release_date);
+        System.out.println("Em Inglês: " + english);
+        System.out.println("Desenvolvedor: " + developer);
+        System.out.println("Publicador: " + publisher);
+        System.out.println("Plataformas (apenas uma): " + platforms);
+        System.out.println("Idade Requerida: " + required_age);
+        for (String i : categories){
+            System.out.print("Categorias: " + i);
+        }
+        System.out.println();
+        for (String i : genres){
+            System.out.print("Gêneros: " + i);
+        }
+        System.out.println();
+        for (String i : steamspy_tags){
+            System.out.print("Tags SteamSpy: " + i);
+        }
+        System.out.println();
+        System.out.println("Conquistas: " + achievements);
+        System.out.println("Avaliações Positivas: " + positive_ratings);
+        System.out.println("Avaliações Negativas: " + negative_ratings);
+        System.out.println("Tempo Médio de Jogo: " + average_playtime);
+        System.out.println("Tempo Mediano de Jogo: " + median_playtime);
+        System.out.println("Proprietários: " + owners);
+        System.out.println("Preço: " + price);
     }
 }
 
