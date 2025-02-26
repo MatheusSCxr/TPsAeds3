@@ -6,7 +6,7 @@ public class DataBase {
         //obter os objetos da base de dados csv (steam.csv)
 
         try {
-            RandomAccessFile entrada = new RandomAccessFile("./steamgames.csv","r");
+            RandomAccessFile entrada = new RandomAccessFile("./database/steamgames.csv","r");
             RandomAccessFile saida = new RandomAccessFile("./games_ds.db","rw");
             String linha = entrada.readLine();//ignorar primeira linha
             int contador = 0;
