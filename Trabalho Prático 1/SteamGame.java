@@ -229,10 +229,14 @@ public class SteamGame {
         return this.price;
     }
 
+    public void setPrice(float price){
+        this.price = price;
+    }
+
     public void printAll() {
         System.out.println("--------------- VALORES RESGISTRADOS ---------------");
         System.out.println("ID: " + id);
-        System.out.println("App ID: " + appid);
+        System.out.println("AppId: " + appid);
         System.out.println("Nome: " + name);
         System.out.println("Data de Lançamento: " + release_date);
         System.out.println("Em Inglês: " + english);
@@ -240,18 +244,9 @@ public class SteamGame {
         System.out.println("Publicador: " + publisher);
         System.out.println("Plataformas (apenas uma): " + platforms);
         System.out.println("Idade Requerida: " + required_age);
-        for (String i : categories){
-            System.out.print("Categorias: " + i);
-        }
-        System.out.println();
-        for (String i : genres){
-            System.out.print("Gêneros: " + i);
-        }
-        System.out.println();
-        for (String i : steamspy_tags){
-            System.out.print("Tags SteamSpy: " + i);
-        }
-        System.out.println();
+        System.out.println("Categorias: " + categories);
+        System.out.println("Gêneros: " + genres);
+        System.out.println("Steam SpyTags: " + steamspy_tags);
         System.out.println("Conquistas: " + achievements);
         System.out.println("Avaliações Positivas: " + positive_ratings);
         System.out.println("Avaliações Negativas: " + negative_ratings);

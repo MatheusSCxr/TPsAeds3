@@ -1,4 +1,5 @@
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 
 public class DataBase {
     public static void main(String[] args) {
@@ -18,12 +19,12 @@ public class DataBase {
             //variável para debug
             Boolean stop = false;
             //iniciando o loop de leitura completa do arquivo CSV
-            while (entrada.getFilePointer() < entrada.length() && stop == false && contador < 415){
+            while (entrada.getFilePointer() < entrada.length() && stop == false && contador < 100){
                 //obter liha atual do CSV
                 linha = entrada.readLine();
 
                 //mensagens para debug
-                System.out.println("\n--------------- Processando Linha ["+ contador + "] -------------------");
+                System.out.println("\n--------------- Processando Linha [" + contador + "] -------------------");
                 System.out.println("LINHA EXTRAÍDA -> " + linha);
 
                 //incrementar contador de linhas lidas
@@ -33,6 +34,8 @@ public class DataBase {
                 if (linha != null){
                     //criar objeto do tipo SteamGame, para registrar o objeto inteiro como 1 registro
                     SteamGame jogo = new SteamGame();
+
+                    jogo.setId(contador - 1);
 
                     //filtrar e separar os conteúdos do CSV, dividos por ','
                     String[] content = linha.split(",");
@@ -72,31 +75,37 @@ public class DataBase {
 
                             //substituir na string
                             content[pos_vet] = elemento.toString();
-                            //escrever conteúdo...
-                            saida.writeUTF(elemento.toString());
                         }
                         switch (pos_val) {
                             case 1 -> {
                                 System.out.println("Nome -> " + content[pos_vet]);
+                                jogo.setName(content[pos_vet]);
                                 saida.writeUTF(content[pos_vet]);
                             }
                             case 2 -> {
                                 System.out.println("Release -> " + content[pos_vet]);
+                                jogo.setReleaseDate(content[pos_vet]);
                                 saida.writeUTF(content[pos_vet]);
                             }
                             case 3 -> {
                                 System.out.println("English (boolean) -> " + content[pos_vet]);
-                                if (content[pos_vet].startsWith("1"))
+                                if (content[pos_vet].startsWith("1")){
+                                    jogo.setEnglish(true);
                                     saida.writeBoolean(true);
-                                else
+                                }
+                                else{
+                                    jogo.setEnglish(false);
                                     saida.writeBoolean(false);
+                                }
                             }
                             case 4 -> {
                                 System.out.println("Developer -> " + content[pos_vet]);
+                                jogo.setDeveloper(content[pos_vet]);
                                 saida.writeUTF(content[pos_vet]);
                             }
                             case 5 -> {
                                 System.out.println("Publisher -> " + content[pos_vet]);
+                                jogo.setPublisher(content[pos_vet]);
                                 saida.writeUTF(content[pos_vet]);
                             }
                             default -> System.out.println("pos_val INVÁLIDA ou não acessível código = " + pos_val);
@@ -107,84 +116,114 @@ public class DataBase {
                         System.out.println("PROXIMA -> " + content[pos_vet]);
                     }
 
-                    //pos vet = 6
+                    //gora pos_vet é constante e será apenas incrmentado 1. atual = 6
                     System.out.println("Length plat = " + content[pos_vet].length());
                     System.out.println("Plataforms -> " + content[pos_vet]);
                     if (content[pos_vet].length() > 7){ //string de tamanho fixo
-                        System.out.println("Plataforms PROCESSADA -> " + content[pos_vet].substring(0,content[pos_vet].indexOf(";")));
-                        saida.writeUTF(content[pos_vet].substring(0,content[pos_vet].indexOf(";")));
+                        String process = content[pos_vet].substring(0,content[pos_vet].indexOf(";"));
+                        System.out.println("Plataforms PROCESSADA -> " + process);
+                        jogo.setPlatforms(process);
+                        saida.writeUTF(process);
                     }
                     else{
+                        jogo.setPlatforms("windows");
                         saida.writeUTF("windows"); 
                     }
 
+                    //pos_vet = 7
                     System.out.println("Required Age -> " + content[pos_vet + 1]);
+                    jogo.setRequiredAge(Integer.parseInt(content[pos_vet + 1]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 1]));
 
                     String[] categories = content[pos_vet + 2].split(";");
+                    ArrayList<String> categoriesList = new ArrayList<>();
+                    
                     System.out.println("Categories ORIGINAL -> " + content[pos_vet + 2]);
                     if (categories.length > 1){
                         System.out.println("Detectadas " + categories.length + " categorias. Gravando valor...");
                         saida.writeInt(categories.length);
-                        for (int i = 0; i < categories.length; i++){
-                            System.out.println("Categories Processada -> " + categories[i]);
-                            saida.writeUTF(categories[i]);
+                        for (String i : categories){
+                            System.out.println("Categories Processada -> " + i);
+                            categoriesList.add(i);
+                            saida.writeUTF(i);
                         }
                     }
-                    else
+                    else{
                         System.out.println("Categories Processada -> " + categories[0]);
-
+                        categoriesList.add(categories[0]);
+                    }
+                    jogo.setCategories(categoriesList);
+                    
                     String[] genres = content[pos_vet + 3].split(";");
+                    ArrayList<String> genreList = new ArrayList<>();
+
                     System.out.println("Genres ORIGINAL -> " + content[pos_vet + 3]);
                     if (genres.length > 1){
-                        System.out.println("Detectados " + genres.length + " genres. Gravando valor...");
+                        System.out.println("Detectados " + genres.length + " gêneros. Gravando valor...");
                         saida.writeInt(genres.length);
-                        for (int i = 0; i < genres.length; i++){
-                            System.out.println("Genres Processada -> " + genres[i]);
-                            saida.writeUTF(genres[i]);
+                        for (String i : genres){
+                            System.out.println("Genre Processado -> " + i);
+                            genreList.add(i);
+                            saida.writeUTF(i);
                         }
                     }
-                    else
-                        System.out.println("Genres Processada -> " + genres[0]);
+                    else{
+                        System.out.println("Genre Processado -> " + genres[0]);
+                        genreList.add(genres[0]);
+                    }
+                    jogo.setGenres(genreList);
 
                     String[] spytag = content[pos_vet + 4].split(";");
+                    ArrayList<String> spytagList = new ArrayList<>();
+                    
                     System.out.println("Spytag ORIGINAL -> " + content[pos_vet + 4]);
                     if (spytag.length > 1){
-                        System.out.println("Detectados " + spytag.length + " spytags. Gravando valor...");
+                        System.out.println("Detectadas " + spytag.length + " spytags. Gravando valor...");
                         saida.writeInt(spytag.length);
-                        for (int i = 0; i < spytag.length; i++){
-                            System.out.println("Spytag Processada -> " + spytag[i]);
-                            saida.writeUTF(spytag[i]);
+                        for (String i : spytag){
+                            System.out.println("Spytag Processada -> " + i);
+                            spytagList.add(i);
+                            saida.writeUTF(i);
                         }
                     }
-                    else
-                        System.out.println("Genres Processada -> " + genres[0]);
+                    else{
+                        System.out.println("Spytag Processada -> " + genres[0]);
+                        spytagList.add(spytag[0]);
+                    }
+                    jogo.setSteamspyTags(spytagList);
 
                     System.out.println("Achievements -> " + content[pos_vet + 5]);
+                    jogo.setAchievements(Integer.parseInt(content[pos_vet + 5]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 5]));
 
                     System.out.println("Positive Ratings -> " + content[pos_vet + 6]);
+                    jogo.setPositiveRatings(Integer.parseInt(content[pos_vet + 6]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 6]));
 
                     System.out.println("Negative Ratings -> " + content[pos_vet + 7]);
+                    jogo.setNegativeRatings(Integer.parseInt(content[pos_vet + 7]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 7]));
 
                     System.out.println("Avarage Playtime -> " + content[pos_vet + 8]);
+                    jogo.setAveragePlaytime(Integer.parseInt(content[pos_vet + 8]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 8]));
 
                     System.out.println("Median Playtime -> " + content[pos_vet + 9]);
+                    jogo.setMedianPlaytime(Integer.parseInt(content[pos_vet + 9]));
                     saida.writeInt(Integer.parseInt(content[pos_vet + 9]));
 
                     System.out.println("Owners -> " + content[pos_vet + 10]);
+                    jogo.setOwners(content[pos_vet + 10]);
                     saida.writeUTF(content[pos_vet + 10]);
 
                     System.out.println("Price -> " + content[pos_vet + 11]);
+                    jogo.setPrice(Float.parseFloat(content[pos_vet + 11]));
                     saida.writeFloat(Float.parseFloat(content[pos_vet + 11]));
 
                     jogo.printAll();
                 }
             }
-            System.out.println("Linhas processadas = " + (contador + 1) + "\n");
+            System.out.println("Total de linhas processadas = " + (contador - 1) + "\n");
             entrada.close();
             saida.close();
         } catch (Exception e) {
