@@ -1,13 +1,42 @@
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class DataBase {
     public static void main(String[] args) {
+        System.out.println("----------------------- [ MENU ] -----------------------");
+        System.out.println("Por favor, digite o número de uma das opções abaixo:");
+        System.out.println("[1] - Criar Arquivo com todos os registros do CSV");
+        System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último)");
+        Scanner leitor = new Scanner(System.in);
+        int choice = leitor.nextInt();
+
+        switch (choice) {
+            case 1 -> {
+                csvExtractAll();
+            }
+            case 2 -> {
+                System.out.println("Digite o número de registros que deseja extrair do CSV: ");
+                int num = leitor.nextInt();
+                csvExtractNum(num);
+            }
+            default -> {
+                System.out.println("Número inválido. Por favor, digite o número de uma das opções acima.");
+                choice = leitor.nextInt();
+            }
+        }
+
+        leitor.close();
+    }
+
+    public static void csvExtractNum(int max){
+        max += 2;
         try {
             //obter os objetos da base de dados CSV (steamgames.csv)
-            RandomAccessFile entrada = new RandomAccessFile("./database/steamgames.csv","r");
+            RandomAccessFile entrada = new RandomAccessFile("./CSV_Input/steamgames.csv","r");
             //definir o local de saída com os dados extraídos
-            RandomAccessFile saida = new RandomAccessFile("./output/games_ds.db","rw");
+            RandomAccessFile saida = new RandomAccessFile("./db_Output/gamesDB.db","rw");
 
             //ler a primeira linha, mas ela será desconsiderada assim que entrar no loop de leitura
             String linha = entrada.readLine();
@@ -19,7 +48,7 @@ public class DataBase {
             //variável para debug
             Boolean stop = false;
             //iniciando o loop de leitura completa do arquivo CSV
-            while (entrada.getFilePointer() < entrada.length() && stop == false && contador < 100){
+            while (entrada.getFilePointer() < entrada.length() && stop == false && contador < max){
                 //obter liha atual do CSV
                 linha = entrada.readLine();
 
@@ -223,11 +252,15 @@ public class DataBase {
                     jogo.printAll();
                 }
             }
-            System.out.println("Total de linhas processadas = " + (contador - 1) + "\n");
+            System.out.println("Total de linhas processadas = " + (contador - 2) + "\n");
             entrada.close();
             saida.close();
-        } catch (Exception e) {
-            System.out.println("Erro durante o processamento do arquivo.");
+        } catch (IOException | NumberFormatException e) {
+            System.out.println("Um erro ocorreu durante o processamento do arquivo :(");
+            System.out.println(e);
         }
+    }
+    public static void csvExtractAll(){
+        csvExtractNum(27077);
     }
 }
