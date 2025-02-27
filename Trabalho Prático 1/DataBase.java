@@ -6,9 +6,9 @@ import java.util.Scanner;
 public class DataBase {
     public static void main(String[] args) {
         System.out.println("----------------------- [ MENU ] -----------------------");
-        System.out.println("Por favor, digite o número de uma das opções abaixo:");
         System.out.println("[1] - Criar Arquivo com todos os registros do CSV");
         System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último)");
+        System.out.print("Por favor, digite o número de uma das opções acima: ");
         Scanner leitor = new Scanner(System.in);
         int choice = leitor.nextInt();
 
@@ -17,7 +17,7 @@ public class DataBase {
                 csvExtractAll();
             }
             case 2 -> {
-                System.out.println("Digite o número de registros que deseja extrair do CSV: ");
+                System.out.print("\nDigite o número de registros que deseja extrair do CSV: ");
                 int num = leitor.nextInt();
                 csvExtractNum(num);
             }
