@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -66,51 +68,58 @@ public class DataBase {
             //mover ponteiro para o final
             saida.seek(saida.length());
 
+            //buffer de saída para escrever no arquivo
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            DataOutputStream bufferData = new DataOutputStream(buffer);
 
-            //gravar no registro as informações do objeto (metadados e dados)
+
+            //gravar no buffer as informações do objeto (metadados e dados)
             //metadados
-            saida.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
-            saida.writeInt(jogo.measureSize());
+            bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
+            bufferData.writeInt(jogo.measureSize());
             
             //debug
             System.out.println("Tamanho do registro : " + jogo.measureSize());
             
             //dados
-            saida.writeInt(jogo.getId());
-            saida.writeInt(jogo.getAppid());
-            saida.writeUTF(jogo.getName());
-            saida.writeLong(jogo.getReleaseDate());
-            saida.writeBoolean(jogo.getEnglish());
-            saida.writeUTF(jogo.getDeveloper());
-            saida.writeUTF(jogo.getPublisher());
-            saida.writeUTF(jogo.getPlatforms());
-            saida.writeInt(jogo.getRequiredAge());
+            bufferData.writeInt(jogo.getId());
+            bufferData.writeInt(jogo.getAppid());
+            bufferData.writeUTF(jogo.getName());
+            bufferData.writeLong(jogo.getReleaseDate());
+            bufferData.writeBoolean(jogo.getEnglish());
+            bufferData.writeUTF(jogo.getDeveloper());
+            bufferData.writeUTF(jogo.getPublisher());
+            bufferData.writeUTF(jogo.getPlatforms());
+            bufferData.writeInt(jogo.getRequiredAge());
 
             //escrever lista de categorias
-            saida.writeInt(jogo.getCategories().size());//indicar tamanho da lista
+            bufferData.writeInt(jogo.getCategories().size());//indicar tamanho da lista
             for (String category : jogo.getCategories()) {
-                saida.writeUTF(category);//elementos da lista
+                bufferData.writeUTF(category);//elementos da lista
             }
 
             //escrever lista de gêneros
-            saida.writeInt(jogo.getGenres().size());
+            bufferData.writeInt(jogo.getGenres().size());
             for (String genre : jogo.getGenres()) {
-                saida.writeUTF(genre);
+                bufferData.writeUTF(genre);
             }
 
             //ecrever lista de spytags
-            saida.writeInt(jogo.getSteamspyTags().size());
+            bufferData.writeInt(jogo.getSteamspyTags().size());
             for (String tag : jogo.getSteamspyTags()) {
-                saida.writeUTF(tag);
+                bufferData.writeUTF(tag);
             }
 
-            saida.writeInt(jogo.getAchievements());
-            saida.writeInt(jogo.getPositiveRatings());
-            saida.writeInt(jogo.getNegativeRatings());
-            saida.writeInt(jogo.getAveragePlaytime());
-            saida.writeInt(jogo.getMedianPlaytime());
-            saida.writeUTF(jogo.getOwners());
-            saida.writeFloat(jogo.getPrice());
+            bufferData.writeInt(jogo.getAchievements());
+            bufferData.writeInt(jogo.getPositiveRatings());
+            bufferData.writeInt(jogo.getNegativeRatings());
+            bufferData.writeInt(jogo.getAveragePlaytime());
+            bufferData.writeInt(jogo.getMedianPlaytime());
+            bufferData.writeUTF(jogo.getOwners());
+            bufferData.writeFloat(jogo.getPrice());
+
+            //escrever no arquivo os dados do buffer
+            saida.write(buffer.toByteArray());
 
             //atualizar o id do início dos registros
             saida.seek(0);
