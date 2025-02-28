@@ -28,7 +28,6 @@ public class SteamGame {
     private int median_playtime;
     private String owners; //tamanho variável (intervalo de números inteiros)
     private float price;
-    private int size;
 
     //construtor (vazio)
     public SteamGame(){
@@ -54,7 +53,6 @@ public class SteamGame {
         this.median_playtime = 0;
         this.owners = "1 (Gabe)";
         this.price = 0;  
-
     }
 
     //construtor (recebendo List<String> como parâmetro)
@@ -238,12 +236,64 @@ public class SteamGame {
         this.price = price;
     }
 
-    public int getSize(){
-        return size;
-    }
+    //calcular o tamanho do registro em bytes
+    public int measureSize(){
+        int soma = 0;
+        
+        // 2 int (id, appid)
+        soma += 2*(Integer.BYTES);
 
-    public void setSize(int size){ //o tamanho será calculado no momento da escrita no arquivo.
-        this.size = size;
+        // 1 String (Name) - 2 bytes + 1 byte para cada de caracteres
+        soma += (2 + (name.length()));
+
+        // 1 long (ReleaseDate em UNIX)
+        soma += Long.BYTES;
+
+        // 1 boolean (English)
+        soma += 1;
+
+        // 3 Strings (Developer, Publisher, Platforms) - 2*3 bytes + 1 byte para cada de caracteres
+        soma += (2 + (developer.length()));
+        soma += (2 + (publisher.length()));
+        soma += (2 + (platforms.length()));
+
+        // 1 int (RequiredAge)
+        soma += Integer.BYTES;
+
+        // 1 int sinalizando a quantidade de elementos na lista
+        soma += Integer.BYTES;
+
+        // 1 lista (Categories): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+        for (String conta : categories){
+            soma += (2 + conta.length());
+        }
+        
+        // 1 int sinalizando a quantidade de elementos na lista
+        soma += Integer.BYTES;
+
+        // 1 lista (Genres): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+        for (String conta : genres){
+            soma += (2 + conta.length());
+        }
+
+        // 1 int sinalizando a quantidade de elementos na lista
+        soma += Integer.BYTES;
+
+        // 1 lista (SteamSpyTags): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+        for (String conta : steamspy_tags){
+            soma += (2 + conta.length());
+        }
+
+        // 5 int (Achievements, PositiveRatings, Negative Ratings, AvaragePlaytime, MedianPlaytime)
+        soma += 5*Integer.BYTES;
+
+        // 1 String (Owners) - 2 bytes + 1 byte para cada de caracteres
+        soma += (2 + (owners.length()));
+
+        // 1 float (preço)
+        soma += Float.BYTES;
+        
+        return soma;
     }
 
     public void printAll() {
@@ -258,7 +308,7 @@ public class SteamGame {
         //formata a data no formato AAAA-MM-DD
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        System.out.println("Data de Lançamento: " + data.format(formatter));
+        System.out.println("Data de Lançamento: " + data.format(formatter) + " (" + release_date + ")");
         System.out.println("Em Inglês: " + english);
         System.out.println("Desenvolvedor: " + developer);
         System.out.println("Publicador: " + publisher);
@@ -274,7 +324,6 @@ public class SteamGame {
         System.out.println("Tempo Mediano de Jogo: " + median_playtime);
         System.out.println("Proprietários: " + owners);
         System.out.println("Preço: " + price);
-        System.out.println("Tamanho em BYTES: " + size);
     }
 }
 
