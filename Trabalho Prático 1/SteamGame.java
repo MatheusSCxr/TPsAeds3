@@ -1,6 +1,10 @@
 //campos do csv:
 //appid,name,release_date,english,developer,publisher,platforms,required_age,categories,genres,steamspy_tags,achievements,positive_ratings,negative_ratings,average_playtime,median_playtime,owners,price
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +12,7 @@ public class SteamGame {
     private int id; //id usado no arquivo de registros
     private int appid;
     private String name; //tamanho variável
-    private String release_date; //data, no formato ano-mes-dia
+    private Long release_date; //data, no formato ano-mes-dia
     private Boolean english; //boolean (0 ou 1)
     private String developer; //tamanho variável
     private String publisher; //tamanho variável
@@ -24,13 +28,14 @@ public class SteamGame {
     private int median_playtime;
     private String owners; //tamanho variável (intervalo de números inteiros)
     private float price;
+    private int size;
 
     //construtor (vazio)
     public SteamGame(){
         this.id = -1;
         this.appid = -1;
         this.name = "Space War";
-        this.release_date = "0000-01-01";
+        this.release_date = (long)1000000001;
         this.english = false;
         this.developer = "Valve";
         this.publisher = "Valve";
@@ -53,7 +58,7 @@ public class SteamGame {
     }
 
     //construtor (recebendo List<String> como parâmetro)
-    public SteamGame(int id, int appid, String name, String release_date, Boolean english, String developer, String publisher, String platforms, int required_age, List<String> categories, List<String> genres, List<String> steamspy_tags, int achievements, int positive_ratings, int negative_ratings, int average_playtime, int median_playtime, String owners, float price) {
+    public SteamGame(int id, int appid, String name, Long release_date, Boolean english, String developer, String publisher, String platforms, int required_age, List<String> categories, List<String> genres, List<String> steamspy_tags, int achievements, int positive_ratings, int negative_ratings, int average_playtime, int median_playtime, String owners, float price) {
         this.id = id;
         this.appid = appid;
         this.name = name;
@@ -105,11 +110,11 @@ public class SteamGame {
         this.name = name;
     }
 
-    public String getReleaseDate() {
+    public Long getReleaseDate() {
         return release_date;
     }
 
-    public void setReleaseDate(String release_date) {
+    public void setReleaseDate(Long release_date) {
         this.release_date = release_date;
     }
 
@@ -233,12 +238,27 @@ public class SteamGame {
         this.price = price;
     }
 
+    public int getSize(){
+        return size;
+    }
+
+    public void setSize(int size){ //o tamanho será calculado no momento da escrita no arquivo.
+        this.size = size;
+    }
+
     public void printAll() {
         System.out.println("--------------- VALORES RESGISTRADOS ---------------");
         System.out.println("ID: " + id);
         System.out.println("AppId: " + appid);
         System.out.println("Nome: " + name);
-        System.out.println("Data de Lançamento: " + release_date);
+
+        //converte o timestamp para LocalDateTime
+        LocalDateTime data = LocalDateTime.ofInstant(Instant.ofEpochSecond(release_date), ZoneOffset.UTC);
+        
+        //formata a data no formato AAAA-MM-DD
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        System.out.println("Data de Lançamento: " + data.format(formatter));
         System.out.println("Em Inglês: " + english);
         System.out.println("Desenvolvedor: " + developer);
         System.out.println("Publicador: " + publisher);
@@ -254,6 +274,7 @@ public class SteamGame {
         System.out.println("Tempo Mediano de Jogo: " + median_playtime);
         System.out.println("Proprietários: " + owners);
         System.out.println("Preço: " + price);
+        System.out.println("Tamanho em BYTES: " + size);
     }
 }
 
