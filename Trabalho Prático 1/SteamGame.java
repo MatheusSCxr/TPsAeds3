@@ -297,7 +297,7 @@ public class SteamGame {
     }
 
     public void printAll() {
-        System.out.println("--------------- VALORES RESGISTRADOS ---------------");
+        System.out.println("--------------- Valores do Registro ---------------");
         System.out.println("ID: " + id);
         System.out.println("AppId: " + appid);
         System.out.println("Nome: " + name);
@@ -324,6 +324,7 @@ public class SteamGame {
         System.out.println("Tempo Mediano de Jogo: " + median_playtime);
         System.out.println("Proprietários: " + owners);
         System.out.println("Preço: " + price);
+        System.out.println("----------------------------------------------------");
     }
 }
 

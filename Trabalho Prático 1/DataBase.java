@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class DataBase {
@@ -16,15 +17,39 @@ public class DataBase {
         int choice = -1;
 
         while (choice != 0){ // 0 = encerrar programa
+            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
             choice = leitor.nextInt();
             switch (choice) {
                 case 1 -> {
+                    System.out.println("[CsvExtract] -> Extraindo todos os registros do arquivo csv. Isso deve demorar um pouco...");
                     csvExtractAll();
                 }
                 case 2 -> {
-                    System.out.print("\nDigite o número de registros que deseja extrair do CSV: ");
+                    System.out.print("\n[CsvExtract] -> Digite o número de registros que deseja extrair do CSV: ");
                     int num = leitor.nextInt();
                     csvExtractNum(num);
+                }
+                case 3, 4 , 5 -> {
+                    int tipo = 1;
+                    while(tipo != 0){
+                        UI_search();
+                        tipo = leitor.nextInt();
+                        if (tipo != 0){
+                            System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
+                            leitor.nextLine(); //descartar caractere \n
+                            String valor = leitor.nextLine();
+                            if (searchGame(valor,tipo)){
+                                System.out.println("[Search] -> Registro encontrado!");
+                            }
+                            else{
+                                System.out.println("\n[Search] -> Não foi possível localizar o registro.");
+                            }
+                            System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
+                            System.out.println("                [1] - SIM                   [0] - NÃO");
+                            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                            tipo = leitor.nextInt();
+                        }
+                    }
                 }
                 case 101 -> {
                     DEBUG_csvExtractAll();
@@ -35,28 +60,43 @@ public class DataBase {
                     DEBUG_csvExtractNum(num);
                 }
                 default -> {
-                    System.out.println("Número inválido. Por favor, digite o número de uma das opções acima.");
+                    if (choice !=0)
+                        System.out.println("[ERRO] -> Número inválido. Por favor, digite o número de uma das opções acima.");
                 }
             }
-            UI_menu();
+
+            //mostrar MENU até que escolha seja 0
+            if (choice !=0){
+                UI_menu();
+            }
         }
 
         //fechar scanner
         leitor.close();
 
-        System.out.println("\n\n[Escolha] -> Programa Encerrado");
+        System.out.println("---------[ Programa Encerrado ]---------");
     }
 
     public static void UI_menu(){
-        System.out.println("----------------------- [ MENU ] -----------------------");
+        System.out.println("\n----------------------- [ MENU ] -----------------------");
         System.out.println("[1] - Criar Arquivo com todos os registros do CSV");
         System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último)");
+        System.out.println("[3] - Procurar por um atributo nos registros [ID, appID, Nome]");
         System.out.println("[101][ DEBUG ] - Criar Arquivo com todos os registros do CSV [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Criar Arquivo com um número N de registros do CSV (primeiro -> último) [Aviso: LENTO]");
         System.out.println("[0] - Encerrar o programa");
         System.out.println("--------------------------------------------------------");
+    }
 
-        System.out.print("\n[Escolha] -> Por favor, digite o número de uma das opções acima: ");
+    public static void UI_search(){
+        System.out.println("\n----------------------- [ Pesquisar ] -----------------------");
+        System.out.println("[1] - Pesquisar pelo ID");
+        System.out.println("[2] - Pesquisar pelo appId");
+        System.out.println("[3] - Pesquisar pelo nome");
+        System.out.println("\n[0] - Voltar ao menu principal");
+        System.out.println("--------------------------------------------------------");
+
+        System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
     }
 
     public static void writeGame(RandomAccessFile saida, SteamGame jogo){
@@ -152,8 +192,135 @@ public class DataBase {
         }
     }
 
+    public static SteamGame readGame (RandomAccessFile arquivo){
+        SteamGame jogo =  new SteamGame();
+
+        try{
+            jogo.setId(arquivo.readInt());
+            jogo.setAppid(arquivo.readInt());
+            jogo.setName(arquivo.readUTF());
+            jogo.setReleaseDate(arquivo.readLong());
+            jogo.setEnglish(arquivo.readBoolean());
+            jogo.setDeveloper(arquivo.readUTF());
+            jogo.setPublisher(arquivo.readUTF());
+            jogo.setPlatforms(arquivo.readUTF());
+            jogo.setRequiredAge(arquivo.readInt());
+
+            //quantidade de elementos na lista a seguir
+            int i = arquivo.readInt();
+            //criar lista
+            ArrayList<String> categories = new ArrayList<>();
+            while (i > 0){
+                categories.add(arquivo.readUTF());
+                i--;
+            }
+            jogo.setCategories(categories);
+            
+            //quantidade de elementos na lista a seguir
+            i = arquivo.readInt();
+            //criar lista
+            ArrayList<String> genres = new ArrayList<>();
+            while (i > 0){
+                genres.add(arquivo.readUTF());
+                i--;
+            }
+            jogo.setGenres(genres);
+            
+            //quantidade de elementos na lista a seguir
+            i = arquivo.readInt();
+            //criar lista
+            ArrayList<String> spytags = new ArrayList<>();
+            while (i > 0){
+                spytags.add(arquivo.readUTF());
+                i--;
+            }
+            jogo.setSteamspyTags(spytags);
+
+            jogo.setAchievements(arquivo.readInt());
+            jogo.setPositiveRatings(arquivo.readInt());
+            jogo.setNegativeRatings(arquivo.readInt());
+            jogo.setAveragePlaytime(arquivo.readInt());
+            jogo.setMedianPlaytime(arquivo.readInt());
+
+            jogo.setOwners(arquivo.readUTF());
+            jogo.setPrice(arquivo.readFloat());
+
+        } catch (Exception e){
+            System.out.println(e);
+        }
+
+        return jogo;
+    }
+
+    public static boolean searchGame(String valor, int tipo){
+        //inicializar
+        boolean achou = false;
+
+        try {
+            RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db", "r");
+            //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
+
+
+            //mover ponteiro para início do arquivo
+            arquivo.seek(0);
+
+            //pular ultimo id inserido
+            arquivo.skipBytes(4);
+            int atual = 2;
+
+            while (arquivo.getFilePointer() != arquivo.length() && !achou){
+                //mostrar barra de progresso
+                progressBar(atual, 27076,"[Search]");
+                
+                //ver se está com lápide ativa
+                byte lapide = arquivo.readByte();
+
+                if (lapide == 0xFF){//pular o tamanho do registro
+                    arquivo.skipBytes(arquivo.readInt());
+                }
+                else{
+                    arquivo.skipBytes(4); //ignorar o tamanho e começar a leitura do registro
+                    SteamGame jogo = readGame(arquivo);
+                    switch (tipo) {
+                        case 1:
+                            if (jogo.getId() == Integer.parseInt(valor)){
+                                achou = true;
+                                System.out.println("Registro com o ID encontrado!");
+                                jogo.printAll();
+                            }
+                            break;
+                        case 2:
+                            if (jogo.getAppid() == Integer.parseInt(valor)){
+                                achou = true;
+                                System.out.println("Registro com o appId encontrado!");
+                                jogo.printAll();
+                            }
+                            break;
+                        case 3:
+                            if (jogo.getName().toLowerCase().compareTo(valor.toLowerCase()) == 0){
+                                achou = true;
+                                System.out.println("Registro com o nome encontrado!");
+                                jogo.printAll();
+                            }
+                            break;
+                        default:
+                            System.out.println("[ERRO] -> Opção de pesquisa inválida.");
+                            break;
+                    }
+                }
+                atual++;
+            }
+
+            arquivo.close();
+        } catch (Exception e) {
+            System.out.println("Erro ao pesquisar o registro!");
+            System.out.println(e);
+        }
+
+        return achou;
+    }
+
     public static void csvExtractAll(){
-        System.out.println("[CsvExtract] -> Iniciando processo de extração de todos os registros do csv. Isso deve demorar um pouco...");
         csvExtractNum(27075);
     }
 
@@ -161,14 +328,14 @@ public class DataBase {
         DEBUG_csvExtractNum(27077);
     }
 
-    public static void progressBar(int atual, int total){
+    public static void progressBar(int atual, int total, String tipo){
         //definir propoção/tamanho da barra
         int ratio = 50;
 
         //calcular o progresso na proproção
         float progress = (float)(((double)atual/total) * ratio); // (total / total) = 1 * proproção = proporção
 
-        StringBuilder barra = new StringBuilder("[CsvExtract] -> PROGRESSO ATUAL:  ["); //criar barra
+        StringBuilder barra = new StringBuilder(tipo + " -> ["); //criar barra
 
         //preencher barra de acordo com o progresso
         for (int i = 0; i < ratio; i++){
@@ -185,7 +352,7 @@ public class DataBase {
         barra.append("   [").append(String.format("%.1f", ((progress/ratio)*100))).append("%]");
 
         //exibir registro atual
-        barra.append("   Registro número: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
+        barra.append("   Registro: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
 
         //imprimir a barra
         System.out.print("\r" + barra.toString());
@@ -198,12 +365,12 @@ public class DataBase {
                 //obter os objetos da base de dados CSV (steamgames.csv)
                 RandomAccessFile entrada = new RandomAccessFile("./CSV_Input/steamgames.csv","r");
 
-                //excluir o arquivo existente, se necessário
+                //excluir o arquivo existente
                 File file = new File("./db_Output/gamesDB.db");
                 if (file.exists()) {
                     file.delete();
                 }
-
+                
                 //definir o local de saída com os dados extraídos
                 RandomAccessFile saida = new RandomAccessFile("./db_Output/gamesDB.db","rw");
 
@@ -221,7 +388,7 @@ public class DataBase {
                 //iniciando o loop de leitura completa do arquivo CSV
                 while (entrada.getFilePointer() < entrada.length() && contador < max){
                     //imprimir barra de progresso
-                    progressBar(contador, max - 1);
+                    progressBar(contador, max - 1,"[CsvExtract]");
 
                     //obter liha atual do CSV
                     linha = entrada.readLine();
@@ -309,9 +476,7 @@ public class DataBase {
                         ArrayList<String> categoriesList = new ArrayList<>();
                         
                         if (categories.length > 1){
-                            for (String i : categories){
-                                categoriesList.add(i);
-                            }
+                            categoriesList.addAll(Arrays.asList(categories));
                         }
                         else{
                             categoriesList.add(categories[0]);
@@ -322,9 +487,7 @@ public class DataBase {
                         ArrayList<String> genreList = new ArrayList<>();
 
                         if (genres.length > 1){
-                            for (String i : genres){
-                                genreList.add(i);
-                            }
+                            genreList.addAll(Arrays.asList(genres));
                         }
                         else{
                             genreList.add(genres[0]);
@@ -335,9 +498,7 @@ public class DataBase {
                         ArrayList<String> spytagList = new ArrayList<>();
                         
                         if (spytag.length > 1){
-                            for (String i : spytag){
-                                spytagList.add(i);
-                            }
+                            spytagList.addAll(Arrays.asList(spytag));
                         }
                         else{
                             spytagList.add(spytag[0]);
