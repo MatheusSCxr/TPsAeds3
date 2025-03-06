@@ -37,12 +37,7 @@ public class DataBase {
                             System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
                             leitor.nextLine(); //descartar caractere \n
                             String valor = leitor.nextLine();
-                            if (searchGame(valor,tipo)){
-                                System.out.println("[Search] -> Registro encontrado!");
-                            }
-                            else{
-                                System.out.println("\n[Search] -> Não foi possível localizar o registro.");
-                            }
+                            searchGame(valor, tipo);
                             System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
                             System.out.println("                [1] - SIM                   [0] - NÃO");
                             System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
@@ -97,6 +92,7 @@ public class DataBase {
         System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último)");
         System.out.println("[3] - Procurar por um atributo nos registros [ID, appID, Nome]");
         System.out.println("[4] - Criar um registro no arquivo de banco de dados");
+        System.out.println("[5] - Remover um registro no arquivo de banco de dados [por ID]");
         System.out.println("[101][ DEBUG ] - Criar Arquivo com todos os registros do CSV [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Criar Arquivo com um número N de registros do CSV (primeiro -> último) [Aviso: LENTO]");
         System.out.println("[0] - Encerrar o programa");
@@ -277,9 +273,14 @@ public class DataBase {
         return jogo;
     }
 
-    public static boolean searchGame(String valor, int tipo){
-        //inicializar
+    public static SteamGame searchGame(String valor, int tipo){
+        //tipo 1 -> pesquisa por ID
+        //tipo 2 -> pesquisa por appId
+        //tipo 3 -> pesquisa por name
+
+        //inicializar variáveis de pesquisa
         boolean achou = false;
+        SteamGame jogo = new SteamGame();
 
         try {
             RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db", "r");
@@ -305,32 +306,38 @@ public class DataBase {
                 }
                 else{
                     arquivo.skipBytes(4); //ignorar o tamanho e começar a leitura do registro
-                    SteamGame jogo = readGame(arquivo);
+                    jogo = readGame(arquivo);
                     switch (tipo) {
                         case 1:
                             if (jogo.getId() == Integer.parseInt(valor)){
                                 achou = true;
                                 System.out.println("Registro com o ID encontrado!");
-                                jogo.printAll();
                             }
                             break;
                         case 2:
                             if (jogo.getAppid() == Integer.parseInt(valor)){
                                 achou = true;
                                 System.out.println("Registro com o appId encontrado!");
-                                jogo.printAll();
                             }
                             break;
                         case 3:
                             if (jogo.getName().toLowerCase().compareTo(valor.toLowerCase()) == 0){
                                 achou = true;
                                 System.out.println("Registro com o nome encontrado!");
-                                jogo.printAll();
                             }
                             break;
                         default:
                             System.out.println("[ERRO] -> Opção de pesquisa inválida.");
                             break;
+                    }
+
+                    //devolver o jogo encontrado
+                    if (achou){
+                        jogo.printAll();
+                        System.out.println("[Search] -> Registro encontrado!");
+                    }
+                    else{
+                        System.out.println("\n[Search] -> Não foi possível localizar o registro.");
                     }
                 }
                 atual++;
@@ -342,7 +349,7 @@ public class DataBase {
             System.out.println(e);
         }
 
-        return achou;
+        return jogo;
     }
 
     public static boolean createGame(int tipo) {
@@ -484,7 +491,7 @@ public class DataBase {
     public static long convertString_Unix(String valor){
         long timestamp;
         String[] calendario = valor.split("-");
-        
+
         //formatar no tipo LocalDate
         LocalDate data = LocalDate.of(Integer.parseInt(calendario[0]), Integer.parseInt(calendario[1]), Integer.parseInt(calendario[2]));
         
