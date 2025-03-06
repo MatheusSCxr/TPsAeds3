@@ -21,7 +21,6 @@ public class DataBase {
             choice = leitor.nextInt();
             switch (choice) {
                 case 1 -> {
-                    System.out.println("[CsvExtract] -> Extraindo todos os registros do arquivo csv. Isso deve demorar um pouco...");
                     csvExtractAll();
                 }
                 case 2 -> {
@@ -29,7 +28,7 @@ public class DataBase {
                     int num = leitor.nextInt();
                     csvExtractNum(num);
                 }
-                case 3, 4 , 5 -> {
+                case 3 -> {
                     int tipo = 1;
                     while(tipo != 0){
                         UI_search();
@@ -48,6 +47,21 @@ public class DataBase {
                             System.out.println("                [1] - SIM                   [0] - NÃO");
                             System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
                             tipo = leitor.nextInt();
+                        }
+                    }
+                }
+                case 4 -> {
+                    int tipo = 1;
+                    while(tipo != 0){
+                        UI_create();
+                        tipo = leitor.nextInt();
+                        if (tipo != 0){
+                            if (createGame(tipo)){
+                                System.out.println("[Create] -> Registro criado e gravado com sucesso");
+                            }
+                            else{
+                                System.out.println("[Create] -> Não foi possível criar e gravar o registro");
+                            }
                         }
                     }
                 }
@@ -82,6 +96,7 @@ public class DataBase {
         System.out.println("[1] - Criar Arquivo com todos os registros do CSV");
         System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último)");
         System.out.println("[3] - Procurar por um atributo nos registros [ID, appID, Nome]");
+        System.out.println("[4] - Criar um registro no arquivo de banco de dados");
         System.out.println("[101][ DEBUG ] - Criar Arquivo com todos os registros do CSV [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Criar Arquivo com um número N de registros do CSV (primeiro -> último) [Aviso: LENTO]");
         System.out.println("[0] - Encerrar o programa");
@@ -93,6 +108,16 @@ public class DataBase {
         System.out.println("[1] - Pesquisar pelo ID");
         System.out.println("[2] - Pesquisar pelo appId");
         System.out.println("[3] - Pesquisar pelo nome");
+        System.out.println("\n[0] - Voltar ao menu principal");
+        System.out.println("--------------------------------------------------------");
+
+        System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+    }
+
+    public static void UI_create(){
+        System.out.println("\n----------------------- [ Criar ] -----------------------");
+        System.out.println("[1] - Criar e adicionar registro com construtor padrão");
+        System.out.println("[2] - Criar e adicionar registro customizado");
         System.out.println("\n[0] - Voltar ao menu principal");
         System.out.println("--------------------------------------------------------");
 
@@ -187,7 +212,7 @@ public class DataBase {
             saida.writeInt(id);
 
         } catch (Exception e) {
-            System.out.println("Erro ao gravar o registro no arquivo!");
+            System.out.println("[ERRO] -> Não foi possível escrever o registro no arquivo");
             System.out.println(e);
         }
     }
@@ -320,7 +345,156 @@ public class DataBase {
         return achou;
     }
 
+    public static boolean createGame(int tipo) {
+        boolean resp = false;
+        try {
+            RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db", "rw");
+
+
+            SteamGame jogo = new SteamGame();
+
+            if (tipo == 1){
+                writeGame(arquivo, jogo);
+                jogo.printAll();
+                resp = true;
+            }
+            else{
+                Scanner leitor = new Scanner(System.in);
+                //appId
+                System.out.print("\n[Create] -> Digite o appId do jogo: ");
+                String valor = leitor.nextLine();
+                jogo.setAppid(Integer.parseInt(valor));
+                //name
+                System.out.print("\n[Create] -> Digite o nome do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setName(valor);
+                //release-date
+                System.out.print("\n[Create] -> Digite a data de lançamento do jogo (\"Ano\"-\"Mês\"-\"Dia\"): ");
+                valor = leitor.nextLine();
+                jogo.setReleaseDate(convertString_Unix(valor));
+                //english
+                System.out.print("\n[Create] -> Digite o booleano English: \"true\"/1 ou \"false\"/0: ");
+                valor = leitor.nextLine();
+                jogo.setEnglish(Boolean.valueOf(valor));
+                //developer
+                System.out.print("\n[Create] -> Digite o desenvolvedor do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setDeveloper(valor);
+                //publisher
+                System.out.print("\n[Create] -> Digite o distribuidor do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setPublisher(valor);
+                //platforms
+                System.out.print("\n[Create] -> Plataforma = \"windows\" (valor fixo) \n");
+                //required-age
+                System.out.print("\n[Create] -> Digite a idade necessária: ");
+                valor = leitor.nextLine();
+                if (Integer.parseInt(valor) < 0){
+                    System.out.println("[Create] -> Valor inválido. Escrevendo 0...");
+                    jogo.setRequiredAge(0);
+                }
+                else{
+                    jogo.setRequiredAge(Integer.parseInt(valor));
+                }
+
+                //contador de elementos na lista
+                int num = 0;
+
+                //lista categories
+                System.out.print("\n[Create] -> Digite o número de categorias: ");
+                num = Integer.parseInt(leitor.nextLine());
+                ArrayList<String> categories = new ArrayList<>();
+                for (int i = 0; i < num; i++){
+                    System.out.print("\n[Create] -> Digite a categoria [" + i + "]: ");
+                    valor = leitor.nextLine();
+                    categories.add(valor);
+                }
+                jogo.setCategories(categories);
+
+                //lista genres
+                System.out.print("\n[Create] -> Digite o número de gêneros: ");
+                num = Integer.parseInt(leitor.nextLine());
+                ArrayList<String> genres = new ArrayList<>();
+                for (int i = 0; i < num; i++){
+                    System.out.print("\n[Create] -> Digite o gênero [" + i + "]: ");
+                    valor = leitor.nextLine();
+                    genres.add(valor);
+                }
+                jogo.setGenres(genres);
+
+                //lista spytags
+                System.out.print("\n[Create] -> Digite o número de spytags: ");
+                num = Integer.parseInt(leitor.nextLine());
+                ArrayList<String> spytags = new ArrayList<>();
+                for (int i = 0; i < num; i++){
+                    System.out.print("\n[Create] -> Digite a spytag [" + i + "]: ");
+                    valor = leitor.nextLine();
+                    spytags.add(valor);
+                }
+                jogo.setSteamspyTags(spytags);
+
+                //achievements
+                System.out.print("\n[Create] -> Digite o número de conquistas do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setAchievements(Integer.parseInt(valor));
+                
+                //positive-ratings
+                System.out.print("\n[Create] -> Digite o número de avaliações positivas do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setPositiveRatings(Integer.parseInt(valor));  
+
+                //negative-ratings
+                System.out.print("\n[Create] -> Digite o número de avaliações negativas do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setNegativeRatings(Integer.parseInt(valor));  
+
+                //avarage-playtime
+                System.out.print("\n[Create] -> Digite o tempo de jogo médio do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setAveragePlaytime(Integer.parseInt(valor));    
+                
+                //median-playtime
+                System.out.print("\n[Create] -> Digite o tempo de jogo mediano do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setMedianPlaytime(Integer.parseInt(valor));     
+                
+                //owners
+                System.out.print("\n[Create] -> Digite número aproximado de proprietários do jogo (\"min\"-\"max\"): ");
+                valor = leitor.nextLine();
+                jogo.setOwners(valor); 
+                
+                //preço
+                System.out.print("\n[Create] -> Digite o preço do jogo: ");
+                valor = leitor.nextLine();
+                jogo.setPrice(Float.parseFloat(valor));
+
+                //escrever jogo no arquivo
+                writeGame(arquivo, jogo);
+                jogo.printAll();
+
+                resp = true;
+            }
+        } catch (Exception e) {
+            System.out.println("[ERRO] -> Não foi possível criar o registro");
+            System.out.println(e);
+        }
+        return resp;
+    }
+
+    public static long convertString_Unix(String valor){
+        long timestamp;
+        String[] calendario = valor.split("-");
+        
+        //formatar no tipo LocalDate
+        LocalDate data = LocalDate.of(Integer.parseInt(calendario[0]), Integer.parseInt(calendario[1]), Integer.parseInt(calendario[2]));
+        
+        //converter para Unix timestamp
+        timestamp = data.atStartOfDay().toEpochSecond(ZoneOffset.UTC);
+        return timestamp;
+    }
+
     public static void csvExtractAll(){
+        System.out.println("[CsvExtract] -> Extraindo todos os registros do arquivo csv. Isso deve demorar um pouco...");
         csvExtractNum(27075);
     }
 
@@ -432,13 +606,7 @@ public class DataBase {
                                     jogo.setName(content[pos_vet]);
                                 }
                                 case 2 -> {
-                                    String[] calendario = content[pos_vet].split("-");
-                                    LocalDate data = LocalDate.of(Integer.parseInt(calendario[0]), Integer.parseInt(calendario[1]), Integer.parseInt(calendario[2]));
-                                    
-                                    //converter para Unix timestamp
-                                    long timestamp = data.atStartOfDay().toEpochSecond(ZoneOffset.UTC);
-                                    //gravar no objeto o unix
-                                    jogo.setReleaseDate(timestamp);
+                                    jogo.setReleaseDate(convertString_Unix(content[pos_vet]));
                                 }
                                 case 3 -> {
                                     if (content[pos_vet].startsWith("1")){
