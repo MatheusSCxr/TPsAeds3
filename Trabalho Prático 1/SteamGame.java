@@ -1,6 +1,7 @@
 //campos do csv:
 //appid,name,release_date,english,developer,publisher,platforms,required_age,categories,genres,steamspy_tags,achievements,positive_ratings,negative_ratings,average_playtime,median_playtime,owners,price
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -241,61 +242,61 @@ public class SteamGame {
         int soma = 0;
         
         // 2 int (id, appid)
-        soma += 2*(Integer.BYTES);
-
-        // 1 String (Name) - 2 bytes + 1 byte para cada de caracteres
-        soma += (2 + (name.length()));
-
+        soma += 2 * Integer.BYTES;
+    
+        // 1 String (Name) - Tamanho de bytes de acordo com o UTF-8 para cada caracter
+        soma += 2 + name.getBytes(StandardCharsets.UTF_8).length;
+    
         // 1 long (ReleaseDate em UNIX)
         soma += Long.BYTES;
-
+    
         // 1 boolean (English)
         soma += 1;
-
-        // 3 Strings (Developer, Publisher, Platforms) - 2*3 bytes + 1 byte para cada de caracteres
-        soma += (2 + (developer.length()));
-        soma += (2 + (publisher.length()));
-        soma += (2 + (platforms.length()));
-
+    
+        // 3 Strings (Developer, Publisher, Platforms) - Tamanho de bytes de acordo com o UTF-8 para cada caracter
+        soma += 2 + developer.getBytes(StandardCharsets.UTF_8).length;
+        soma += 2 + publisher.getBytes(StandardCharsets.UTF_8).length;
+        soma += 2 + platforms.getBytes(StandardCharsets.UTF_8).length;
+    
         // 1 int (RequiredAge)
         soma += Integer.BYTES;
-
+    
         // 1 int sinalizando a quantidade de elementos na lista
         soma += Integer.BYTES;
-
-        // 1 lista (Categories): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+    
+        // 1 lista (Categories): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + tamanho de bytes de acordo com o UTF-8 para cada caracter
         for (String conta : categories){
-            soma += (2 + conta.length());
+            soma += 2 + conta.getBytes(StandardCharsets.UTF_8).length;
         }
         
         // 1 int sinalizando a quantidade de elementos na lista
         soma += Integer.BYTES;
-
-        // 1 lista (Genres): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+    
+        // 1 lista (Genres): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + tamanho de bytes de acordo com o UTF-8 para cada caracter
         for (String conta : genres){
-            soma += (2 + conta.length());
+            soma += 2 + conta.getBytes(StandardCharsets.UTF_8).length;
         }
-
+    
         // 1 int sinalizando a quantidade de elementos na lista
         soma += Integer.BYTES;
-
-        // 1 lista (SteamSpyTags): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + 1 byte para cada caracter da string
+    
+        // 1 lista (SteamSpyTags): para cada elemento da lista: 2 bytes sinalizando tamanho da string, + tamanho de bytes de acordo com o UTF-8 para cada caracter
         for (String conta : steamspy_tags){
-            soma += (2 + conta.length());
+            soma += 2 + conta.getBytes(StandardCharsets.UTF_8).length;
         }
-
+    
         // 5 int (Achievements, PositiveRatings, Negative Ratings, AvaragePlaytime, MedianPlaytime)
-        soma += 5*Integer.BYTES;
-
-        // 1 String (Owners) - 2 bytes + 1 byte para cada de caracteres
-        soma += (2 + (owners.length()));
-
+        soma += 5 * Integer.BYTES;
+    
+        // 1 String (Owners) - 2 bytes + tamanho de bytes de acordo com o UTF-8 para cada caracter
+        soma += 2 + owners.getBytes(StandardCharsets.UTF_8).length;
+    
         // 1 float (preço)
         soma += Float.BYTES;
         
         return soma;
     }
-
+    
     public void printAll() {
         System.out.println("--------------- Valores do Registro ---------------");
         System.out.println("ID: " + id);
