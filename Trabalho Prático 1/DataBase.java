@@ -17,11 +17,25 @@ public class DataBase {
     public static void main(String[] args) {
         System.out.println("[INFO] -> Procurando base de dados...");
 
-        //assumir que não existe um banco de dados. O método "countGames" atualizará o valor caso exista um
-        hasData = false;
-
-        //contar a quantidade de jogos ativos e inativos (deletados) na base de dados, se houver uma
-        countGames();
+        //identificar base de dados
+        File dbFile = new File("./db_Output/gamesDB.db");
+        if (dbFile.exists()){
+            hasData = true;
+            //abrir arquivo no modo de leitura
+            try (RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r")) {
+                System.out.println("[INFO] -> Foi encontrada uma base de dados");
+                //contar a quantidade de jogos ativos e inativos (deletados) na base de dados
+                countGames(arquivo);
+                arquivo.close();
+            } catch (IOException e) {
+                System.out.println("[ERRO] -> Não foi possível abrir o arquivo da base de dados");
+                System.out.println(e);
+            }
+        }
+        else{
+            System.out.println("[INFO] -> Nenhuma base de dados foi encontrada na pasta \"db_Output\"");
+            hasData = false;
+        }
 
         //exibir interface de menu com opções
         UI_menu();
@@ -175,70 +189,65 @@ public class DataBase {
             //mover ponteiro para o final
             saida.seek(saida.length());
 
-            //buffer de saída para escrever no arquivo
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            DataOutputStream bufferData = new DataOutputStream(buffer);
-
-
             //gravar no buffer as informações do objeto (metadados e dados)
-            //metadados
-            bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
-            bufferData.writeInt(jogo.measureSize());
-            
-            //debug
-            //System.out.println("Tamanho do registro : " + jogo.measureSize());
-            
-            //dados
-            bufferData.writeInt(jogo.getId());
-            bufferData.writeInt(jogo.getAppid());
-            bufferData.writeUTF(jogo.getName());
-            bufferData.writeLong(jogo.getReleaseDate());
-            bufferData.writeBoolean(jogo.getEnglish());
-            bufferData.writeUTF(jogo.getDeveloper());
-            bufferData.writeUTF(jogo.getPublisher());
-            bufferData.writeUTF(jogo.getPlatforms());
-            bufferData.writeInt(jogo.getRequiredAge());
+            try (ByteArrayOutputStream buffer = new ByteArrayOutputStream(); DataOutputStream bufferData = new DataOutputStream(buffer)){
 
-            //escrever lista de categorias
-            bufferData.writeInt(jogo.getCategories().size());//indicar tamanho da lista
-            for (String category : jogo.getCategories()) {
-                bufferData.writeUTF(category);//elementos da lista
+                //metadados
+                bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
+                bufferData.writeInt(jogo.measureSize());
+                
+                //dados
+                bufferData.writeInt(jogo.getId());
+                bufferData.writeInt(jogo.getAppid());
+                bufferData.writeUTF(jogo.getName());
+                bufferData.writeLong(jogo.getReleaseDate());
+                bufferData.writeBoolean(jogo.getEnglish());
+                bufferData.writeUTF(jogo.getDeveloper());
+                bufferData.writeUTF(jogo.getPublisher());
+                bufferData.writeUTF(jogo.getPlatforms());
+                bufferData.writeInt(jogo.getRequiredAge());
+
+                //escrever lista de categorias
+                bufferData.writeInt(jogo.getCategories().size());//indicar tamanho da lista
+                for (String category : jogo.getCategories()) {
+                    bufferData.writeUTF(category);//elementos da lista
+                }
+
+                //escrever lista de gêneros
+                bufferData.writeInt(jogo.getGenres().size());
+                for (String genre : jogo.getGenres()) {
+                    bufferData.writeUTF(genre);
+                }
+
+                //ecrever lista de spytags
+                bufferData.writeInt(jogo.getSteamspyTags().size());
+                for (String tag : jogo.getSteamspyTags()) {
+                    bufferData.writeUTF(tag);
+                }
+
+                bufferData.writeInt(jogo.getAchievements());
+                bufferData.writeInt(jogo.getPositiveRatings());
+                bufferData.writeInt(jogo.getNegativeRatings());
+                bufferData.writeInt(jogo.getAveragePlaytime());
+                bufferData.writeInt(jogo.getMedianPlaytime());
+                bufferData.writeUTF(jogo.getOwners());
+                bufferData.writeFloat(jogo.getPrice());
+
+                //escrever no arquivo os dados do buffer
+                saida.write(buffer.toByteArray());
+
+                //sinalizar que o registro foi escrito com sucesso no arquivo
+                resp = true;
+
+                //incrementar quantidade total de registros
+                totalGames++;
+
+                //atualizar o id do início dos registros
+                saida.seek(0);
+                saida.writeInt(id);
             }
 
-            //escrever lista de gêneros
-            bufferData.writeInt(jogo.getGenres().size());
-            for (String genre : jogo.getGenres()) {
-                bufferData.writeUTF(genre);
-            }
-
-            //ecrever lista de spytags
-            bufferData.writeInt(jogo.getSteamspyTags().size());
-            for (String tag : jogo.getSteamspyTags()) {
-                bufferData.writeUTF(tag);
-            }
-
-            bufferData.writeInt(jogo.getAchievements());
-            bufferData.writeInt(jogo.getPositiveRatings());
-            bufferData.writeInt(jogo.getNegativeRatings());
-            bufferData.writeInt(jogo.getAveragePlaytime());
-            bufferData.writeInt(jogo.getMedianPlaytime());
-            bufferData.writeUTF(jogo.getOwners());
-            bufferData.writeFloat(jogo.getPrice());
-
-            //escrever no arquivo os dados do buffer
-            saida.write(buffer.toByteArray());
-
-            //sinalizar que o registro foi escrito com sucesso no arquivo
-            resp = true;
-
-            //incrementar quantidade total de registros
-            totalGames++;
-
-            //atualizar o id do início dos registros
-            saida.seek(0);
-            saida.writeInt(id);
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println("[ERRO] -> Não foi possível escrever o registro no arquivo");
             System.out.println(e);
         }
@@ -300,7 +309,8 @@ public class DataBase {
             jogo.setOwners(arquivo.readUTF());
             jogo.setPrice(arquivo.readFloat());
 
-        } catch (Exception e){
+        } catch (IOException e){
+            System.out.println("[ERRO] -> Não foi possível resgatar o registro no arquivo");
             System.out.println(e);
         }
 
@@ -660,53 +670,42 @@ public class DataBase {
         System.out.print("\r" + barra.toString());
     }
 
-    public static int countGames(){
+    public static int countGames(RandomAccessFile arquivo){
         //método para contabilizar todos os jogos no arquivo de registros
         int totalActive = 0;
         int totalInactive = 0;
 
-        //identificar base de dados
-        File dbFile = new File("./db_Output/gamesDB.db");
-        if (dbFile.exists()){
-            //atualizar status para indicar que existe um banco de dados
-            hasData = true;
-            System.out.println("[INFO] -> Foi encontrada uma base de dados. Iniciando contagem de registros... Por favor, aguarde.");
-            try {
-                RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r");
-                
-                //mover ponteiro para início do arquivo
-                arquivo.seek(0);
+        System.out.println("Iniciando contagem de registros... Por favor, aguarde.");
+        try {                
+            //mover ponteiro para início do arquivo
+            arquivo.seek(0);
 
-                //pular ultimo id inserido
-                arquivo.skipBytes(4);
+            //pular ultimo id inserido
+            arquivo.skipBytes(4);
 
-                while (arquivo.getFilePointer() < arquivo.length()){
-                    //ler se a lápide está ativa
-                    int lapide = arquivo.readUnsignedByte();
-                    if (lapide != 0xFF){
-                        //contabilizar registro ativo
-                        totalActive++;
-                    }
-                    else{
-                        //contabilizar registro inativo (deletado)
-                        totalInactive++;
-                    }
-
-                    //pular o tamanho do registro a seguir
-                    int num = arquivo.readInt();
-                    arquivo.skipBytes(num);
-
-                    //mostrar número de registros válidos encontrados
-                    System.out.print("\r" + "[INFO] -> Lendo registros... [" + totalActive + "]");
+            while (arquivo.getFilePointer() < arquivo.length()){
+                //ler se a lápide está ativa
+                int lapide = arquivo.readUnsignedByte();
+                if (lapide != 0xFF){
+                    //contabilizar registro ativo
+                    totalActive++;
                 }
-                System.out.println("\n[INFO] -> Contagem finalizada.");
-                arquivo.close();
-            } catch (Exception e) {
-                System.out.println("[ERRO] -> Não foi possível contar o número de registros");
+                else{
+                    //contabilizar registro inativo (deletado)
+                    totalInactive++;
+                }
+
+                //pular o tamanho do registro a seguir
+                int num = arquivo.readInt();
+                arquivo.skipBytes(num);
+
+                //mostrar número de registros válidos encontrados
+                System.out.print("\r" + "[INFO] -> Lendo registros... [" + totalActive + "]");
             }
-        }
-        else{
-            System.out.println("[INFO] -> Nenhuma base de dados foi encontrada na pasta \"db_Output\"");
+            System.out.println("\n[INFO] -> Contagem finalizada.");
+        } catch (IOException e) {
+            System.out.println("[ERRO] -> Não foi possível contar o número de registros");
+            System.out.println(e);
         }
 
         //atualizar variáveis globais da classe
