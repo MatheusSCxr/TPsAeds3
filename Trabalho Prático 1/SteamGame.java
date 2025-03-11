@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SteamGame {
+    private static final int PLATFORMS_LENGHT = 7; //tamanho da string de tamanho fixo em plataformas
     private int id; //id usado no arquivo de registros
     private int appid;
     private String name; //tamanho variável
@@ -17,7 +18,7 @@ public class SteamGame {
     private Boolean english; //boolean (0 ou 1)
     private String developer; //tamanho variável
     private String publisher; //tamanho variável
-    private String platforms; //string de tamanho fixo ("windows")
+    private String platforms; //string de tamanho fixo
     private int required_age;
     private List<String> categories;  //lista de tamanho variável
     private List<String> genres;  //lista de tamanho variável
@@ -109,8 +110,18 @@ public class SteamGame {
         this.name = name;
     }
 
-    public Long getReleaseDate() {
+    public Long getReleaseDateUnix() {
         return release_date;
+    }
+
+    public String getReleaseDateString() {
+        //converte o timestamp para LocalDateTime
+        LocalDateTime data = LocalDateTime.ofInstant(Instant.ofEpochSecond(release_date), ZoneOffset.UTC);
+        
+        //formata a data no formato AAAA-MM-DD
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        return data.format(formatter);
     }
 
     public void setReleaseDate(Long release_date) {
@@ -145,8 +156,18 @@ public class SteamGame {
         return platforms;
     }
 
-    public void setPlatforms(String platforms) {
-        this.platforms = platforms;
+    public boolean setPlatforms(String platforms) {
+        boolean resp = false;
+        if (platforms.length() == PLATFORMS_LENGHT){
+            this.platforms = platforms;
+            resp = true;
+        }
+
+        return resp;
+    }
+
+    public int getPlatformsLenght(){
+        return PLATFORMS_LENGHT;
     }
 
     public int getRequiredAge() {
@@ -302,14 +323,7 @@ public class SteamGame {
         System.out.println("ID: " + id);
         System.out.println("AppId: " + appid);
         System.out.println("Nome: " + name);
-
-        //converte o timestamp para LocalDateTime
-        LocalDateTime data = LocalDateTime.ofInstant(Instant.ofEpochSecond(release_date), ZoneOffset.UTC);
-        
-        //formata a data no formato AAAA-MM-DD
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        System.out.println("Data de Lançamento: " + data.format(formatter) + " (" + release_date + ")");
+        System.out.println("Data de Lançamento: " + getReleaseDateString() + " (" + release_date + ")");
         System.out.println("Em Inglês: " + english);
         System.out.println("Desenvolvedor: " + developer);
         System.out.println("Publicador: " + publisher);
