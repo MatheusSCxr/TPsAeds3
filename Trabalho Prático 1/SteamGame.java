@@ -1,5 +1,4 @@
-//campos do csv:
-//appid,name,release_date,english,developer,publisher,platforms,required_age,categories,genres,steamspy_tags,achievements,positive_ratings,negative_ratings,average_playtime,median_playtime,owners,price
+
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -31,15 +30,15 @@ public class SteamGame {
     private String owners; //tamanho variável (intervalo de números inteiros)
     private float price;
 
-    //construtor (vazio)
+    //construtor (vazio) (exemplo de jogo inexistente na Steam)
     public SteamGame(){
         this.id = -1;
         this.appid = -1;
-        this.name = "Space War";
+        this.name = "BloodBorne";
         this.release_date = (long)1000000001;
         this.english = false;
-        this.developer = "Valve";
-        this.publisher = "Valve";
+        this.developer = "FromSoftware";
+        this.publisher = "Sony";
         this.platforms = "linux";
         this.required_age = 0;
         this.categories = new ArrayList<>();
@@ -47,13 +46,13 @@ public class SteamGame {
         this.genres = new ArrayList<>();
         this.genres.add("Action");
         this.steamspy_tags = new ArrayList<>();
-        this.steamspy_tags.add("FPS");
+        this.steamspy_tags.add("Souls-like");
         this.achievements = -1;
         this.positive_ratings = 0;
         this.negative_ratings = 0;
         this.average_playtime = 0;
         this.median_playtime = 0;
-        this.owners = "1 (Gabe)";
+        this.owners = "1 (Sony)";
         this.price = 0;  
     }
 
