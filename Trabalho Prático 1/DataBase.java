@@ -21,13 +21,14 @@ public class DataBase {
     public static int totalGames; //variável de controle do número de registros ativos no banco de dados
     public static int totalDeleted; //variável de controle do número de registros inativos no banco de dados
     public static boolean hasData; //variável que indica se existe ou não um banco de dados
+    public static int totalSegmentos; //variável de controle para indicar o progresso da ordenação externa
+
     public static void main(String[] args) {
         System.out.println("[INFO] -> Procurando base de dados...");
 
         //identificar base de dados
         File dbFile = new File("./db_Output/gamesDB.db");
         if (dbFile.exists()){
-            hasData = true;
             //abrir arquivo no modo de leitura
             try (RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r")) {
                 System.out.println("[INFO] -> Foi encontrada uma base de dados");
@@ -38,9 +39,9 @@ public class DataBase {
                 System.out.println("[ERRO] -> Não foi possível abrir o arquivo da base de dados");
                 System.out.println(e);
             }
-        }
-        else{
-            System.out.println("[INFO] -> Nenhuma base de dados foi encontrada na pasta \"db_Output\"");
+
+            hasData = true;
+        } else{
             hasData = false;
         }
 
@@ -64,68 +65,103 @@ public class DataBase {
                             csvExtractNum(num);
                         }
                         case 3 -> {
-                            int tipo = 1;
-                            while(tipo != 0){
-                                UI_search();
-                                tipo = leitor.nextInt();
-                                if (tipo != 0 && tipo < 4){
-                                    System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
-                                    leitor.nextLine(); //descartar caractere \n
-                                    String valor = leitor.nextLine();
-                                    searchGame(valor, tipo);
-                                    System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
-                                    System.out.println("                [1] - SIM                   [0] - NÃO");
-                                    System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                            if (hasData){
+                                int tipo = 1;
+                                while(tipo != 0){
+                                    UI_search();
                                     tipo = leitor.nextInt();
+                                    if (tipo != 0 && tipo < 4){
+                                        System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
+                                        leitor.nextLine(); //descartar caractere \n
+                                        String valor = leitor.nextLine();
+                                        searchGame(valor, tipo);
+                                        System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
+                                        System.out.println(" \n               [1] - SIM                   [0] - NÃO");
+                                        System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                        tipo = leitor.nextInt();
+                                    }
+                                    else if (tipo > 3){
+                                        System.out.println("[Search] -> Opção inválida.");
+                                    }
                                 }
-                                else if (tipo > 3){
-                                    System.out.println("[Search] -> Opção inválida.");
-                                }
+                            } else{
+                                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
                             }
                         }
                         case 4 -> {
-                            int tipo = 1;
-                            while(tipo != 0){
-                                UI_create();
-                                tipo = leitor.nextInt();
-                                if (tipo != 0){
-                                    if (createGame(tipo)){
-                                        System.out.println("[Create] -> Registro criado e gravado com sucesso");
-                                    }
-                                    else{
-                                        System.out.println("[Create] -> Não foi possível criar e gravar o registro");
+                            if (hasData){
+                                int tipo = 1;
+                                while(tipo != 0){
+                                    UI_create();
+                                    tipo = leitor.nextInt();
+                                    if (tipo != 0){
+                                        if (createGame(tipo)){
+                                            System.out.println("[Create] -> Registro criado e gravado com sucesso");
+                                        }
+                                        else{
+                                            System.out.println("[Create] -> Não foi possível criar e gravar o registro");
+                                        }
                                     }
                                 }
+                            } else{
+                                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
                             }
                         }
                         case 5 -> {
-                            System.out.print("[Delete] -> Insira o ID do jogo que deseja remover: ");
-                            int deleteID = leitor.nextInt();
-                            if (deleteGame(deleteID)){
-                                System.out.println("[Delete] -> Registro excluído com sucesso");
+                            if (hasData){
+                                System.out.print("[Delete] -> Insira o ID do jogo que deseja remover: ");
+                                int deleteID = leitor.nextInt();
+                                if (deleteGame(deleteID)){
+                                    System.out.println("[Delete] -> Registro excluído com sucesso");
+                                }
+                            } else{
+                                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
                             }
                         }
                         case 6 -> {
-                            System.out.print("[Update] -> Insira o ID do jogo que deseja atualizar: ");
-                            int updateID = leitor.nextInt();
-                            if (updateGame(updateID)){
-                                System.out.println("[Update] -> Registro atualizado com sucesso");
+                            if (hasData){
+                                System.out.print("[Update] -> Insira o ID do jogo que deseja atualizar: ");
+                                int updateID = leitor.nextInt();
+                                if (updateGame(updateID)){
+                                    System.out.println("[Update] -> Registro atualizado com sucesso");
+                                }
+                            } else{
+                                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
                             }
                         }
                         case 7 -> {
-                            try {
-                                System.out.print("[Sort] -> Digite o número de caminhos a serem usados na ordenação: ");
-                                int caminhos = leitor.nextInt();
-                                System.out.print("[Sort] -> Digite a capacidade máxima da heap utilizada na memória primária: ");
-                                int heapSize = leitor.nextInt();
-                                if (heapSize < 1){
-                                    System.out.println("[INFO] -> Valor digitado inválido ou muito baixo. O tamano da heap foi definido como 7.");
-                                    heapSize = 7;
+                            if (hasData){
+                                try {                                    
+                                    System.out.println("[Sort] -> Digite qual será o atributo a ser ordenado:");
+                                    System.out.println("                [1] - ID                   [2] - NOME");
+                                    System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                    int ordenacao = leitor.nextInt();
+                                    if (ordenacao == 1 || ordenacao == 2){
+                                        System.out.print("[Sort] -> Digite o número de caminhos a serem usados na ordenação: ");
+                                        int caminhos = leitor.nextInt();
+                                        System.out.print("[Sort] -> Digite a capacidade máxima da heap utilizada na memória primária: ");
+                                        int heapSize = leitor.nextInt();
+                                        if (heapSize < 1){
+                                            System.out.println("[INFO] -> Valor digitado inválido ou muito baixo. O tamano da heap foi definido como 7.");
+                                            heapSize = 7;
+                                        }
+                                        externalSort(caminhos,heapSize,ordenacao);
+                                    }
+                                } catch (Exception e) {
+                                    System.out.println(e);
                                 }
-                                externalSort(caminhos,heapSize);
-                            } catch (Exception e) {
-                                System.out.println(e);
+                            } else{
+                                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
                             }
+                        }
+                        case 8 ->{
+                            backupDatabase();
+                        }
+                        case 9 ->{
+                            restoreDatabase();
+                        }
+                        case 10 ->{
+                            printDataBase();
                         }
                         case 101 -> {
                             DEBUG_csvExtractAll();
@@ -172,7 +208,10 @@ public class DataBase {
         System.out.println("[4] - Criar um registro no arquivo de banco de dados");
         System.out.println("[5] - Remover um registro no arquivo de banco de dados [por ID]");
         System.out.println("[6] - Atualizar um registro no arquivo de banco de dados [por ID]");
-        System.out.println("[7] - Ordenar arquivo de registros");
+        System.out.println("[7] - Ordenar arquivo de registros (ID ou Nome)");
+        System.out.println("[8] - Criar um backup da base de dados atual");
+        System.out.println("[9] - Restaurar um backup para a base de dados atual");
+        System.out.println("[10] - Imprimir em um arquivo todos os registros (ativos e inativos) da base de dados (ID e Nome)");
         System.out.println("[101][ DEBUG ] - Criar Arquivo com todos os registros do CSV [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Criar Arquivo com um número N de registros do CSV (primeiro -> último) [Aviso: LENTO]");
         System.out.println("[0] - Encerrar o programa");
@@ -416,7 +455,7 @@ public class DataBase {
 
             while (arquivo.getFilePointer() < arquivo.length() && !achou){
                 //mostrar barra de progresso
-                progressBar(atual, (totalGames + 1),"[Search]");
+                progressBar(atual, (totalGames + 1),"[Search]",2);
                 
                 //ler se a lápide está ativa
                 int lapide = arquivo.readUnsignedByte();
@@ -613,7 +652,7 @@ public class DataBase {
 
             while (arquivo.getFilePointer() < arquivo.length() && !achou){
                 //mostrar barra de progresso
-                progressBar(atual, (totalGames + 1),"[Search]");
+                progressBar(atual, (totalGames + 1),"[Search]",3);
                 
                 //ler se a lápide está ativa
                 int lapide = arquivo.readUnsignedByte();
@@ -667,7 +706,7 @@ public class DataBase {
     
             }
             if (!achou){
-                System.out.println("\n[Delete] -> Não foi possível localizar a ser excluído.");
+                System.out.println("\n[Delete] -> Não foi possível localizar o registro a ser excluído.");
             }
         }
         catch (Exception e) {
@@ -697,7 +736,7 @@ public class DataBase {
 
             while (arquivo.getFilePointer() < arquivo.length() && !achou){
                 //mostrar barra de progresso
-                progressBar(atual, (totalGames + 1),"[Search]");
+                progressBar(atual, (totalGames + 1),"[Search]",4);
                 
                 //gravar a posição do registro atual
                 long pos_registro = arquivo.getFilePointer();
@@ -741,7 +780,8 @@ public class DataBase {
                                         case 2 -> {
                                             System.out.println("[Update] -> Valor atual do nome: " + jogo.getName());
                                             System.out.print("[Update] -> Digite o novo nome: ");
-                                            String nome = leitor.next();
+                                            leitor.nextLine();
+                                            String nome = leitor.nextLine();
                                             jogo.setName(nome);
                                             resp = true; //indicar que o registro foi atualizado
                                         }
@@ -1050,17 +1090,29 @@ public class DataBase {
         DEBUG_csvExtractNum(27077);
     }
 
-    public static void progressBar(int atual, int total, String tipo){
-        //excluir registros inativos
-        total -= totalDeleted;
+    public static void progressBar(int atual, int total, String operador, int tipo){
+        //tipos:
+        //csvExtract -> 1
+        //Search -> 2
+        //Delete -> 3
+        //Update -> 4
+        //Sort -> 5
+        //Intercalação -> 6
 
         //definir propoção/tamanho da barra
         int ratio = 50;
 
         //calcular o progresso na proproção
-        float progress = (float)(((double)atual/total) * ratio); // (total / total) = 1 * proproção = proporção
+        float progress;
 
-        StringBuilder barra = new StringBuilder(tipo + " -> ["); //criar barra
+        if (tipo != 6)
+            progress = (float)(((double)atual/total) * ratio); // (total / total) = 1 * proproção = proporção 0 a 100%
+        else{   //se for intercalação, a contagem é inversa
+            progress = (float)(((1 - (double)atual/total)) * ratio); // de 100 a 0%
+        }
+        
+        //criar barra
+        StringBuilder barra = new StringBuilder(operador + " -> [");
 
         //preencher barra de acordo com o progresso
         for (int i = 0; i < ratio; i++){
@@ -1077,7 +1129,23 @@ public class DataBase {
         barra.append("   [").append(String.format("%.1f", ((progress/ratio)*100))).append("%]");
 
         //exibir registro atual
-        barra.append("   Registro: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
+        switch (tipo) {
+            case 1 -> {
+                barra.append("   Escrevendo registro: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
+            }
+            case 2,3,4 -> {
+                barra.append("   Procurando registro: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
+            }
+            case 5 -> {
+                barra.append("   Dividindo Registros -> Byte: ").append(atual).append(" de ").append(total);
+            }
+            case 6 ->{
+                barra.append("   Intercalando -> Segmentos restantes: ").append(atual).append(" de ").append(total).append(" \t");
+            }
+            default -> {
+                System.out.println("[ERRO] -> Não foi possível identificar o tipo de barra de progresso");
+            }
+        }
 
         //imprimir a barra
         System.out.print("\r" + barra.toString());
@@ -1088,7 +1156,7 @@ public class DataBase {
         int totalActive = 0;
         int totalInactive = 0;
 
-        System.out.println("Iniciando contagem de registros... Por favor, aguarde.");
+        System.out.println("[INFO] -> Iniciando contagem de registros... Por favor, aguarde.");
         try {                
             //mover ponteiro para início do arquivo
             arquivo.seek(0);
@@ -1130,7 +1198,10 @@ public class DataBase {
     }
 
     public static void csvExtractNum(int max){
-        //resetar número de registros na base de dados
+        //fazer um backup da base de dados, se existir
+        backupDatabase();
+
+        //resetar variáveis globais de número de registros na base de dados
         totalGames = 0;
         totalDeleted = 0;
 
@@ -1154,14 +1225,11 @@ public class DataBase {
                 
                 System.out.println("[CsvExtract] -> Criando registros...");
                 
-                //cronometrar tempo
+                //cronometrar tempo total
                 long tempo_inicio = System.currentTimeMillis();
                 
                 //iniciando o loop de leitura completa do arquivo CSV
                 while (entrada.getFilePointer() < entrada.length() && contador < max){
-                    //imprimir barra de progresso
-                    progressBar(contador, max - 1,"[CsvExtract]");
-                    
                     //obter liha atual do CSV
                     linha = entrada.readLine();
                     
@@ -1288,11 +1356,17 @@ public class DataBase {
                         //gravar as informações do objeto no arquivo como um registro
                         writeGame(saida, jogo);
                     }
+
+                    //imprimir barra de progresso
+                    progressBar(contador - 1, max - 1,"[CsvExtract]",1);
+
                 }
                 
                 //cronometrar tempo
                 long tempo_fim = System.currentTimeMillis();
-                long tempo = tempo_fim - tempo_inicio; //tempo em segundos
+                long tempo = tempo_fim - tempo_inicio; //tempo
+
+                hasData = true;
                 
                 System.out.println("\n[CsvExtract] -> Operação concluída com sucesso.     Tempo decorrido: " + tempo/1000.0 + "s     Total de registros: " + (contador - 2) + "     [" + String.format("%.1f",contador/(tempo/1000.0)) + " registros/s] \n");
                 entrada.close();
@@ -1301,6 +1375,306 @@ public class DataBase {
         } catch (IOException | NumberFormatException e) {
             System.out.println("Ocorreu um erro durante o processamento do arquivo :(");
             System.out.println(e);
+        }
+    }
+
+    public static void externalSort(int caminho_num, int heapSize, int tipo) throws IOException{
+        //limpar pasta de ordenação, caso tenha sobrado algum caminho decorrente de um erro
+        File folder = new File("./db_Sort/");
+        if (folder.exists() && folder.isDirectory()) {
+            for (File file : folder.listFiles()) {
+                if (!file.isDirectory()) {
+                    file.delete();
+                }
+            }
+        }
+
+        //comparator para ordenar por ID (crescente) ou nome (decrescente), priorizando o menor peso
+        Comparator<HeapGame> comparator;
+
+        if (tipo == 1){ //ordenar por ID
+            comparator = (a, b) -> {
+                //se ambos têm peso, comparar pelo peso
+                if (a.getPeso() != 0 && b.getPeso() != 0) {
+                    //priorizar pelo peso (menor peso primeiro)
+                    int comparaPeso = Integer.compare(a.getPeso(), b.getPeso());
+                    if (comparaPeso != 0) {
+                        return comparaPeso;
+                    }
+                } else if (a.getPeso() == 0 && b.getPeso() != 0) {
+                    return -1; // 'a' sem peso vem primeiro
+                } else if (a.getPeso() != 0 && b.getPeso() == 0) {
+                    return 1; // 'b' sem peso vem primeiro
+                }
+    
+                //se os pesos são iguais comparar pelo ID
+                return Integer.compare(a.getId(), b.getId());
+            };
+        }else{ //ordenar por nome
+            comparator = (a, b) -> {
+                //se ambos têm peso, comparar pelo peso
+                if (a.getPeso() != 0 && b.getPeso() != 0) {
+                    //priorizar pelo peso (menor peso primeiro)
+                    int comparaPeso = Integer.compare(a.getPeso(), b.getPeso());
+                    if (comparaPeso != 0) {
+                        return comparaPeso;
+                    }
+                } else if (a.getPeso() == 0 && b.getPeso() != 0) {
+                    return -1; // 'a' sem peso vem primeiro
+                } else if (a.getPeso() != 0 && b.getPeso() == 0) {
+                    return 1; // 'b' sem peso vem primeiro
+                }
+    
+                //se os pesos são iguais comparar pelo nome
+                return a.getName().compareTo(b.getName());
+            };
+        }
+
+        //ordenação
+        try (RandomAccessFile entrada = new RandomAccessFile("./db_Output/gamesDB.db", "r")) {
+            //posicionar ponteiro da entrada na pos 0
+            entrada.seek(0);
+            int lastID = entrada.readInt(); //id usado como referência na criação da nova base de dados
+
+            //heap usada para ordenar
+            PriorityQueue<HeapGame> heap = new PriorityQueue<>(comparator);
+
+            //criar arquivos que servirão de caminhos para a ordenação externa
+            RandomAccessFile caminhos[] = new RandomAccessFile[caminho_num];
+
+            for (int i = 0; i < caminho_num; i++){
+                caminhos[i] = new RandomAccessFile("./db_Sort/caminho_" + i + ".db","rw");
+                caminhos[i].writeInt(lastID); //transcrever o ultimo ID inserido para a nova base de dados
+            }
+
+            //variável de controle do tamanho da heap
+            int elementosHeap = 0;
+
+            //variável de controle do número de elementos processados
+            int total_registros = 0;
+
+            //preencher a heap até a capacidade máxima (heapSize)
+            while (elementosHeap < heapSize && (entrada.getFilePointer() < entrada.length())){
+                //ler se a lápide está ativa
+                int lapide = entrada.readUnsignedByte();
+                if (lapide == 0xFF){
+                    //ler e pular o tamanho do registro a seguir
+                    entrada.skipBytes(entrada.readInt());
+                }
+                else{
+                    entrada.skipBytes(4);
+                    heap.add(new HeapGame(readGame(entrada),0));
+                    elementosHeap++;
+                    total_registros++;
+                }
+            }
+
+            //heap preenchida com peso 0
+
+            //esvaziar heap e preencher novamente até o final do arquivo de entrada
+            String ultimo = "";
+            int ultimoId = -1;
+            int peso = 0;
+            int caminho_atual = 0;
+
+            while (entrada.getFilePointer() < entrada.length()){
+                //mostrar barra de progresso
+                progressBar((int)entrada.getFilePointer(),(int)entrada.length(),"[Sort]",5);
+                
+                //puxar elemento da heap
+                HeapGame heapgame = heap.poll();
+                SteamGame jogo = heapgame.getGame();
+
+                boolean condicao = false;
+                if (tipo == 1) {
+                    //comparar por ID
+                    condicao = jogo.getId() > ultimoId;
+                }else{
+                    //comparar por nome
+                    condicao = jogo.getName().compareTo(ultimo) > 0;
+                }
+                
+                if (condicao) {
+                    // escrever no caminho atual
+                    writeGame(caminhos[caminho_atual], jogo);
+                    total_registros++;
+                    
+
+                    //atualizar referência de ultimo
+                    if (tipo == 1) {
+                        ultimoId = jogo.getId();
+                    } else {
+                        ultimo = jogo.getName();
+                    }
+
+                    //ler próximo registro e coloca-lo na heap
+                    boolean inseriu = false;
+                    while (!inseriu){
+                        //ler se a lápide está ativa
+                        int lapide = entrada.readUnsignedByte();
+                        if (lapide == 0xFF){
+                            //ler e pular o tamanho do registro a seguir
+                            entrada.skipBytes(entrada.readInt());
+                        }
+                        else{
+                            entrada.skipBytes(4);
+                            heap.add(new HeapGame(readGame(entrada),peso));
+                            inseriu = true;
+                        }
+                    }
+                }
+                else{
+                    //se a heap estiver cheia, com elementos de peso maior
+                    if (heapgame.getPeso() > peso){
+                        //incrementar peso para os próximos elementos
+                        peso++;
+
+                        //adicionar elemento mais pesado na heap
+                        heap.add(new HeapGame(jogo, peso));
+    
+                        //trocar caminho ("ciclando" entre 0 até o numero máximo)
+                        caminho_atual = (caminho_atual + 1) % caminho_num;
+
+                        //iniciar um novo segmento e resetar referencias
+                        ultimo = "";
+                        ultimoId = -1;
+                    }
+                    else{
+                        //preencher a heap até que todos tenham o mesmo peso superior
+                        heap.add(new HeapGame(jogo, peso + 1));
+                    }
+                }
+            }
+
+            //mostrar 100% de progresso
+            progressBar((int)entrada.getFilePointer(),(int)entrada.length(),"[Sort]",5);
+
+            int ref_peso = peso;
+
+            //gravar os elementos restantes do heap nos caminhos
+            while (!heap.isEmpty()){
+                HeapGame heapgame = heap.poll();
+                SteamGame jogo = heapgame.getGame();
+                if (heapgame.getPeso() != ref_peso){
+                    //trocar caminho ("ciclando" entre 0 até o numero máximo)
+                    caminho_atual = (caminho_atual + 1) % caminho_num;
+                    ref_peso = heapgame.getPeso();
+                    writeGame(caminhos[caminho_atual], jogo);
+                }
+                else{
+                    ref_peso = heapgame.getPeso();
+                    writeGame(caminhos[caminho_atual], jogo);
+                }
+            }
+
+
+            System.out.println("\n[Sort] -> Registros distribuidos com sucesso");
+            //intercalação dos arquivos
+
+            //variável de controle de caminhos com algum valor
+            int caminhos_validos = 0;
+
+            //detectar quais arquivos possuem registros
+            for (int i = 0; i < caminho_num; i++){
+                if (caminhos[i].length() > 4) //4 pois ele armazena o ultimo id inserido na base de dados
+                    caminhos_validos++;
+            }
+
+            System.out.println("[Sort] -> Caminhos devidamente utilizados: " + caminhos_validos);
+
+            if (caminhos_validos > 1){
+                //intercalação própriamente dita
+                System.out.println("[Sort] -> Iniciando intercalação...");
+
+                //atualizar variável de controle para mostrar o progresso
+                totalSegmentos = 0;
+
+                //criar arquivos que servirão de caminhos para a ordenação externa
+                RandomAccessFile intercalados[] = new RandomAccessFile[caminhos_validos]; //reduz a quantidade de acordo com os arquivos válidos, caso necessário
+
+                //iniciar arquivos que serão intercalados
+                for (int i = 0; i < caminhos_validos; i++){
+                    intercalados[i] = new RandomAccessFile("./db_Sort/caminho_" + (i + caminho_num) + ".db","rw");
+                    intercalados[i].writeInt(lastID); //transcrever o ultimo ID inserido para a nova base de dados
+                }
+
+                //intercalar até sobrar 1 arquivo de caminho (que será o arquivo ordenado)
+                while (caminhos_validos > 1){
+                    //intercalar os arquivos dos caminhos
+                    intercalados = intercalar(caminhos, intercalados, caminhos_validos,tipo);
+
+                    //resetar arquivos de caminhos anteriores para reaproveitar os arquivos
+                    for (RandomAccessFile i : caminhos){
+                        i.setLength(4); //4 para preservar o ultimo id inserido na base de dados
+                        i.skipBytes(4);
+                    }
+
+                    //intercalar novamente, agora os novos arquivos intercalados, aproveitando os arquivos anteriores de caminhos
+                    caminhos = intercalar(intercalados, caminhos, caminhos_validos,tipo);
+
+                    //resetar arquivos de caminhos anteriores (que eram os intercalados anteriorermente) para reaproveitar os arquivos
+                    for (RandomAccessFile i : intercalados){
+                        i.setLength(4); //4 para preservar o ultimo id inserido na base de dados
+                        i.skipBytes(4);
+                    }
+
+                    //contar novamente número de caminhos válidos (com registros)
+                    caminhos_validos = 0;
+
+                    //detectar quais arquivos possuem registros
+                    for (int i = 0; i < caminho_num; i++){
+                        if (caminhos[i].length() > 4)
+                            caminhos_validos++;
+                    }
+                    
+                }
+                //deletar por completo os vetores auxiliares (intercalados)
+                for (int k = 0; k < intercalados.length; k++){
+                    if (intercalados[k] != null) {
+                        intercalados[k].close();
+
+                        //deletar os arquivos intercalados
+                        File deletar = new File("./db_Sort/caminho_" + (k + caminho_num) + ".db");
+                        //verificação dupla
+                        if (deletar.exists()){
+                            deletar.delete();
+                        }
+                    }
+                } 
+            }
+
+            //deletar por completo os vetores auxiliares (caminhos)
+            for (int j = 1; j < caminhos.length; j++){ //começar por 1 pois 0 está com a base de dados ordenada
+                if (caminhos[j] != null) {
+                    caminhos[j].close();
+
+                    //deletar os arquivos intercalados
+                    File deletar = new File("./db_Sort/caminho_" + j + ".db");
+                    //verificação dupla
+                    if (deletar.exists()) {
+                        deletar.delete();
+                    }
+                }
+            }
+
+            //fechar arquivo ordenado
+            caminhos[0].close();
+            
+            //terminou a ordenação
+            System.out.println("\n[Sort] -> A Base de dados foi ordenada com sucesso");
+
+            //atualizar número de registros
+            totalGames = total_registros;
+            totalDeleted = 0;
+
+            //fechar arquivo de entrada (antiga base de dados)
+            entrada.close();
+
+            //fazer backup e substituir pelo arquivo ordenado
+            backupDatabase();
+            
+        } catch (Exception e) {
+            System.out.println("[ERRO] -> Não foi possível realizar a ordenação dos registros.");
         }
     }
 
@@ -1522,7 +1896,8 @@ public class DataBase {
         }
     }
 
-    public static void externalSort(int caminho_num, int heapSize) throws IOException{
+    //ordena apenas por nome tipo == 2
+    public static void DEBUGexternalSort(int caminho_num, int heapSize, int tipo) throws IOException{
         try (RandomAccessFile entrada = new RandomAccessFile("./db_Output/gamesDB.db", "r")) {
             //primerio -> retirar da heap
             //segundo -> comparar com o úlltimo inserido
@@ -1705,7 +2080,7 @@ public class DataBase {
                 //intercalar até sobrar 1 arquivo de caminho (que será o arquivo ordenado)
                 while (caminhos_validos > 1){
                     //intercalar os arquivos dos caminhos
-                    intercalados = intercalar(caminhos, intercalados, caminhos_validos);
+                    intercalados = intercalar(caminhos, intercalados, caminhos_validos,tipo);
 
                     //resetar arquivos de caminhos anteriores para reaproveitar os arquivos
                     for (RandomAccessFile i : caminhos){
@@ -1714,7 +2089,7 @@ public class DataBase {
                     }
 
                     //intercalar novamente, agora os novos arquivos intercalados, aproveitando os arquivos anteriores de caminhos
-                    caminhos = intercalar(intercalados, caminhos, caminhos_validos);
+                    caminhos = intercalar(intercalados, caminhos, caminhos_validos,tipo);
 
                     //resetar arquivos de caminhos anteriores (que eram os intercalados anteriorermente) para reaproveitar os arquivos
                     for (RandomAccessFile i : intercalados){
@@ -1768,7 +2143,7 @@ public class DataBase {
             }
 
             //imprimir em um arquivo txt, o ID e o Nome, sequencialmente do arquivo gerado (para verificar a ordenação)
-            printDataBase(caminhos[0]);
+            printDataBase();
 
             //fechar arquivo ordenado
             caminhos[0].close();
@@ -1791,140 +2166,170 @@ public class DataBase {
         try {
             //criar arquivo de backup
             File dbOutputFile = new File("./db_Output/gamesDB.db");
-            File dbBackupFile = new File("./db_Backup/gamesDB_backup.db");
+            if (dbOutputFile.exists()){
+                File dbBackupFile = new File("./db_Backup/gamesDB_backup.db");
 
-            System.out.println("[Backup] -> Iniciando backup...");
-            //fazer uma copia do banco de dados atual no arquivo de backup
-            Files.copy(dbOutputFile.toPath(), dbBackupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("[Backup] -> Um backup do banco de dados foi criado com sucesso");
-
-            //substituir gamesDB.db por caminho_0.db
-            File dbSortFile = new File("./db_Sort/caminho_0.db");
-            if (dbSortFile.exists()) {
-                //deletar a base de dados anterior
-                Files.delete(dbOutputFile.toPath());
-
-                System.out.println("[Backup] -> Substituindo arquivo do banco de dados...");
-                //renomear caminho_0 para gamesDB (copiar, mudando de nome e deletar antigo.)
-                Files.copy(Paths.get("./db_Sort/caminho_0.db"), Paths.get("./db_Output/gamesDB.db"), StandardCopyOption.REPLACE_EXISTING);
-                Files.delete(Paths.get("./db_Sort/caminho_0.db"));
-
-                System.out.println("[Backup] -> Base de dados substituída com sucesso");
-
-                //contar jogos na nova base de dados
-                try (RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r")) {
-                    //contar a quantidade de jogos ativos e inativos (deletados) na base de dados
-                    countGames(arquivo);
-                } catch (IOException e) {
-                    System.out.println("[ERRO] -> Não foi possível abrir o arquivo da base de dados");
-                    System.out.println(e);
+                System.out.println("[Backup] -> Iniciando backup...");
+                //fazer uma copia do banco de dados atual no arquivo de backup
+                Files.copy(dbOutputFile.toPath(), dbBackupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("[INFO] -> Um backup da base de dados foi criado com sucesso em (./db_Backup/gamesDB_backup.db)");
+    
+                //substituir gamesDB.db por caminho_0.db
+                File dbSortFile = new File("./db_Sort/caminho_0.db");
+                if (dbSortFile.exists()) {
+                    //deletar a base de dados anterior
+                    Files.delete(dbOutputFile.toPath());
+    
+                    System.out.println("[Backup] -> Substituindo arquivo do banco de dados...");
+                    //renomear caminho_0 para gamesDB (copiar, mudando de nome e deletar antigo.)
+                    Files.copy(Paths.get("./db_Sort/caminho_0.db"), Paths.get("./db_Output/gamesDB.db"), StandardCopyOption.REPLACE_EXISTING);
+                    Files.delete(Paths.get("./db_Sort/caminho_0.db"));
+    
+                    System.out.println("[Backup] -> Base de dados substituída com sucesso");
                 }
-
-            } else {
-                System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados ordenada");
+            }
+            else{
+                System.out.println("[INFO] -> Não foi encontrada uma base de dados para fazer um backup.");
             }
         } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+
+    public static void restoreDatabase(){
+        try {
+            //criar arquivo de substituição
+            File dbOutputFile = new File("./db_Output/gamesDB.db");
+            File dbBackupFile = new File("./db_Backup/gamesDB_backup.db");
+
+            if (dbBackupFile.exists()) {
+                System.out.println("[Restore] -> Iniciando restauração...");
+
+                if (dbOutputFile.exists()){
+                    //deletar a base de dados anterior
+                    Files.delete(dbOutputFile.toPath());
+                }
+    
+                // Fazer uma cópia do banco de dados do backup no arquivo atual de banco de dados
+                Files.copy(dbBackupFile.toPath(), dbOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("[Restore] -> Um backup da base de dados foi restaurado com sucesso em (db_Output/gamesDB.db)");
+            } else {
+                System.out.println("[INFO] -> Não foi possível encontrar um backup para restaurar em (db_Backup/gamesDB_backup.db)");
+            }
+
+        } catch (IOException e) {
+            System.out.println("[ERRO] -> Não foi possível restaurar um backup.");
             System.out.println(e);
         }
     }
 
     //imprime os atributos ID e Nome de todos os elementos, ativos e inativos, de uma base de dados
-    public static void printDataBase(RandomAccessFile arquivo){
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./db_Output/printDataBase.txt"))) {    
-            arquivo.seek(0);
-            arquivo.skipBytes(4); //pular ultimo id inserido
-            while (arquivo.getFilePointer() < arquivo.length()){
-                arquivo.skipBytes(5); //pular lápides e tamanhos dos registros
-                SteamGame jogo = readGame(arquivo);
-                writer.write("[ID:" + jogo.getId() + "]\n[" + jogo.getName() + "]\n");
+    public static void printDataBase(){
+        System.out.println("[INFO] -> Imprimindo registros...");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./db_Output/printDataBase.txt"))) {   
+            RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r");
+            int conta = 0;
+            if (arquivo.length() != 0){
+                arquivo.seek(0);
+                arquivo.skipBytes(4); //pular ultimo id inserido
+                while (arquivo.getFilePointer() < arquivo.length()){
+                    arquivo.skipBytes(5); //pular lápides e tamanhos dos registros
+                    SteamGame jogo = readGame(arquivo);
+                    writer.write("[ID:" + jogo.getId() + "]\t\t[" + jogo.getName() + "]\n");
+                    conta++;
+                }
+                writer.write("\n\nNúmero de registros -> " + conta);
+                System.out.println("[INFO] -> Arquivo com IDs e Nomes da base de dados criado com sucesso em (./db_Output/printDataBase.txt)");   
             }
-        } catch (IOException e) {
-            System.out.println(e);
+            else{
+                System.out.println("[INFO] -> Não foi detectada uma base de dados em (./db_Output/gamesDB.db)");
+            }
+            arquivo.close();
+       } catch (IOException e) {
+            System.out.println("[ERRO] -> Não foi possível criar um arquivo com IDs e Nomes da base de dados.");
         }
     }
 
-    public static RandomAccessFile[] intercalar(RandomAccessFile[] caminhos, RandomAccessFile[] intercalados, int caminhos_validos) throws IOException{
-        //vetor de jogos para armazenar o próximo jogo de cada caminho
-        SteamGame jogos_intercalados[] = new SteamGame[caminhos_validos];
+    public static RandomAccessFile[] intercalar(RandomAccessFile[] caminhos, RandomAccessFile[] intercalados, int caminhos_validos, int tipo) throws IOException{
+        try {
+            //variável para a contagem de segmentos
+            int segmentos = 0;
+            
+            //vetor de jogos para armazenar o próximo jogo de cada caminho
+            SteamGame jogos_intercalados[] = new SteamGame[caminhos_validos];
 
-        //obter primeiro jogo de cada caminho
-        for (int i = 0; i < caminhos_validos; i++){
-            //posicionar ponteiros no inicio do registro de cada um dos caminhos
-            if (caminhos[i].length() > 4){ //verificar se o caminho possui um registro
-                caminhos[i].seek(9); //pular ultimo id (4) + lapide (1) + tamanho do registro (4)
-                
-                //ler primeiro jogo de cada caminho
-                jogos_intercalados[i] = readGame(caminhos[i]);
+            //obter primeiro jogo de cada caminho
+            for (int i = 0; i < caminhos_validos; i++){
+                //posicionar ponteiros no inicio do registro de cada um dos caminhos
+                if (caminhos[i].length() > 4){ //verificar se o caminho possui um registro
+                    caminhos[i].seek(9); //pular ultimo id (4) + lapide (1) + tamanho do registro (4)
+                    
+                    //ler primeiro jogo de cada caminho
+                    jogos_intercalados[i] = readGame(caminhos[i]);
+                }
+                else{
+                    jogos_intercalados[i] = null;
+                }
             }
-            else{
-                jogos_intercalados[i] = null;
+            
+            //controle do índice do arquivo intercalado
+            int arquivo_intercalado_atual = 0;
+
+            //variável para controlar o último jogo inserido no arquivo intercalado
+            SteamGame ultimoInserido = null;
+
+            //iniciar a intercalação de caminhos
+            while (!FilesEmpty(caminhos_validos, caminhos) || !gamesEmpty(jogos_intercalados)) {
+                //encontrar o menor jogo entre os jogos dos caminhos
+                int menorIndice = -1;
+                SteamGame menorJogo = null;
+
+                //percorrer todos os N arquivos validos
+                for (int i = 0; i < caminhos_validos; i++) {
+                    if (jogos_intercalados[i] != null && (menorJogo == null || (tipo == 1 && jogos_intercalados[i].getId() < menorJogo.getId()) || (tipo == 2 && jogos_intercalados[i].getName().compareTo(menorJogo.getName()) < 0))) {
+                        menorJogo = jogos_intercalados[i];
+                        menorIndice = i;
+                    }
+                }
+
+                //se houver um jogo a ser escrito no arquivo intercalado
+                if (menorJogo != null) {
+                    //verifica se o jogo atual é menor que o último inserido
+                    if (ultimoInserido != null && ((tipo == 2 && menorJogo.getName().compareTo(ultimoInserido.getName()) < 0) || (tipo == 1 && menorJogo.getId() < ultimoInserido.getId()))) {
+                        //se o último inserido for maior, muda o arquivo intercalado
+                        if (caminhos_validos != 1){
+                            segmentos++;
+                            arquivo_intercalado_atual = (arquivo_intercalado_atual + 1) % caminhos_validos;
+                        }            
+                    }
+
+                    //escrever o menor jogo no arquivo intercalado atual
+                    writeGame(intercalados[arquivo_intercalado_atual],menorJogo);
+
+                    //atualizar o último jogo inserido
+                    ultimoInserido = menorJogo;
+
+                    //mover o ponteiro do arquivo de onde o jogo foi retirado
+                    if (caminhos[menorIndice].getFilePointer() < caminhos[menorIndice].length()) {
+                        //mover ponteiro para o próximo registro
+                        caminhos[menorIndice].skipBytes(5);
+                        jogos_intercalados[menorIndice] = readGame(caminhos[menorIndice]);
+                    } else {
+                        //se terminar a leitura, então colocar null
+                        jogos_intercalados[menorIndice] = null;
+                    }
+                }
             }
+
+            //atualizar variável de controlo do total de segmentos, se for maior
+            if (segmentos > totalSegmentos*2) //totalSegmentos*2 para evitar que segmentos pequenos (temporarios) contem como o total estimado de segmentos
+                totalSegmentos = segmentos; //segmentos totais restantes
+
+            //exibir progresso estimado
+            progressBar(segmentos, totalSegmentos, "[Sort]",6);
+        } catch (Exception e) {
+            System.out.println(e);
         }
-        
-        //controle do índice do arquivo intercalado
-        int arquivo_intercalado_atual = 0;
-
-        //variável para controlar o último jogo inserido no arquivo intercalado
-        SteamGame ultimoInserido = null;
-
-        System.out.println("Iniciando intercalação");
-
-        //iniciar a intercalação de caminhos
-        while (!FilesEmpty(caminhos_validos, caminhos) || !gamesEmpty(jogos_intercalados)) {
-            System.out.println("entrou while");
-            //encontrar o menor jogo entre os jogos dos caminhos
-            int menorIndice = -1;
-            SteamGame menorJogo = null;
-
-            //percorrer todos os N arquivos validos
-            for (int i = 0; i < caminhos_validos; i++) {
-                if (jogos_intercalados[i] != null && (menorJogo == null || jogos_intercalados[i].getName().compareTo(menorJogo.getName()) < 0)) {
-                    menorJogo = jogos_intercalados[i];
-                    menorIndice = i;
-                }
-            }
-
-            if (menorJogo != null)
-                System.out.println("menor -> " + menorJogo.getName());
-
-            //se houver um jogo a ser escrito no arquivo intercalado
-            if (menorJogo != null) {
-                //verifica se o jogo atual é menor que o último inserido
-                if (ultimoInserido != null && menorJogo.getName().compareTo(ultimoInserido.getName()) < 0) {
-                    //se o último inserido for maior, muda o arquivo intercalado
-                    System.out.println("mudando arquivo");
-                    if (caminhos_validos != 1){
-                        arquivo_intercalado_atual = (arquivo_intercalado_atual + 1) % caminhos_validos;
-                    }            
-                    System.out.println("intercalando no arquivo " + arquivo_intercalado_atual);        
-                }
-
-                //escrever o menor jogo no arquivo intercalado atual
-                writeGame(intercalados[arquivo_intercalado_atual],menorJogo);
-                System.out.println("Encreveu " + menorJogo.getName());
-
-                //atualizar o último jogo inserido
-                ultimoInserido = menorJogo;
-
-                //mover o ponteiro do arquivo de onde o jogo foi retirado
-                if (caminhos[menorIndice].getFilePointer() < caminhos[menorIndice].length()) {
-                    //mover ponteiro para o próximo registro
-                    caminhos[menorIndice].skipBytes(5);
-                    System.out.println("moveu ponteiro do arq " + menorIndice);
-                    jogos_intercalados[menorIndice] = readGame(caminhos[menorIndice]);
-                } else {
-                    System.out.println("terminou leitura no arquivo " + menorIndice);
-                    //se terminar a leitura, então colocar null
-                    jogos_intercalados[menorIndice] = null;
-                }
-            }
-        }
-
-
-        
-        System.out.println("Intercalados com sucesso!");
-        //readIntercalado(intercalados);
-        //System.out.println("\n\nleitura feita");
         return intercalados;
     }
 
@@ -1954,7 +2359,7 @@ public class DataBase {
             while (i.getFilePointer() < i.length()){
                 i.skipBytes(5);
                 SteamGame jogo = readGame(i);
-                System.out.println("Jogo: " + jogo.getName());
+                System.out.println("Jogo: " + jogo.getName() + "    ID: " + jogo.getId());
             }
         }
     }
