@@ -147,7 +147,7 @@ public class DataBase {
                                         }
                                         externalSort(caminhos,heapSize,ordenacao);
                                     }
-                                } catch (Exception e) {
+                                } catch (IOException e) {
                                     System.out.println(e);
                                 }
                             } else{
@@ -430,7 +430,7 @@ public class DataBase {
             System.out.println("[ERRO] -> Não foi possível resgatar o registro no arquivo");
             System.out.println(e);
         }
-;
+
         return jogo;
     }
 
@@ -561,7 +561,7 @@ public class DataBase {
                         jogo.setRequiredAge(Integer.parseInt(valor));
                     }   //contador de elementos na lista
 
-                    int num = 0;
+                    int num;
                     //lista categories
                     System.out.print("\n[Create] -> Digite o número de categorias: ");
                     num = Integer.parseInt(leitor.nextLine());
@@ -1036,7 +1036,7 @@ public class DataBase {
                                                 }
                                             }
                                             
-                                        } catch (Exception e) {
+                                        } catch (IOException e) {
                                             System.out.println("[ERRO] -> Não foi possível atualizar o registro do arquivo [" + e + "]");
                                         }
                                         resp = false;
@@ -2226,8 +2226,7 @@ public class DataBase {
     //imprime os atributos ID e Nome de todos os elementos, ativos e inativos, de uma base de dados
     public static void printDataBase(){
         System.out.println("[INFO] -> Imprimindo registros...");
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./db_Output/printDataBase.txt"))) {   
-            RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("./db_Output/printDataBase.txt")); RandomAccessFile arquivo = new RandomAccessFile("./db_Output/gamesDB.db","r")) {
             int conta = 0;
             if (arquivo.length() != 0){
                 arquivo.seek(0);
@@ -2244,7 +2243,6 @@ public class DataBase {
             else{
                 System.out.println("[INFO] -> Não foi detectada uma base de dados em (./db_Output/gamesDB.db)");
             }
-            arquivo.close();
        } catch (IOException e) {
             System.out.println("[ERRO] -> Não foi possível criar um arquivo com IDs e Nomes da base de dados.");
         }
@@ -2327,7 +2325,7 @@ public class DataBase {
 
             //exibir progresso estimado
             progressBar(segmentos, totalSegmentos, "[Sort]",6);
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println(e);
         }
         return intercalados;
