@@ -1,10 +1,10 @@
-
+package models;
 
 public class HeapGame {
     private SteamGame game;
     private int peso;
 
-    HeapGame(SteamGame game, int peso) {
+    public HeapGame(SteamGame game, int peso) {
         this.game = game;
         this.peso = peso;
     }
