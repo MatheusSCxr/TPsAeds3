@@ -121,7 +121,7 @@ public class UI {
             case 6 ->{
                 if (tempo_restante < 0)
                     tempo_restante = 0;
-                barra.append("   Intercalando -> Segmentos restantes: ").append(atual).append(" de ").append(total).append("\t Tempo restante: ").append(tempo_restante).append("s \t");
+                barra.append("   Intercalando -> Segmentos restantes: ").append(atual).append(" de ").append(total).append(" \t Tempo restante: ").append(tempo_restante).append("s \t");
             }
             case 7 ->{
                 barra.append("   Imprimindo registro: ").append(atual).append(" de ").append(total);
