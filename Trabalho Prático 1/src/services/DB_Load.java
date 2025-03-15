@@ -186,7 +186,7 @@ public class DB_Load {
 
                 DataBase.hasData = true;
                 
-                System.out.println("\n[CsvExtract] -> Carga do banco de dados realizada com sucesso.     Tempo decorrido: " + tempo/1000.0 + "s     Total de registros: " + (contador - 2) + "     [" + String.format("%.1f",contador/(tempo/1000.0)) + " registros/s] \n");
+                System.out.println("\n[CsvExtract] -> Carga do banco de dados realizada com sucesso.     Tempo decorrido: " + tempo/1000.0 + "s     Total de registros: " + (contador - 2) + "     Velocidade Média: " + String.format("%.1f",contador/(tempo/1000.0)) + " registros/s \n");
                 entrada.close();
                 saida.close();
             }

@@ -6,19 +6,19 @@ public class UI {
     public static void menu(int totalGames, int totalDeleted){
         System.out.println("\n----------------------- [ MENU ] -----------------------");
         System.out.println("Registros ativos -> [" + totalGames + "]        Registros inativos -> [" + totalDeleted + "]");
-        System.out.println("[1] - Criar Arquivo com todos os registros do CSV (primeiro -> último; Já ordenado por appId)");
-        System.out.println("[2] - Criar Arquivo com um número N de registros do CSV (primeiro -> último; Já ordenado por appId)");
-        System.out.println("[3] - Procurar por um atributo nos registros [ID, appID, Nome]");
-        System.out.println("[4] - Criar um registro no arquivo de banco de dados");
-        System.out.println("[5] - Remover um registro no arquivo de banco de dados [por ID]");
-        System.out.println("[6] - Atualizar um registro no arquivo de banco de dados [por ID]");
-        System.out.println("[7] - Ordenar arquivo de registros (ID ou Nome)");
-        System.out.println("[8] - Criar um backup da base de dados atual");
-        System.out.println("[9] - Restaurar um backup para a base de dados atual");
-        System.out.println("[10] - Imprimir em um arquivo todos os registros (ativos e inativos) da base de dados (ID e Nome)");
-        System.out.println("[101][ DEBUG ] - Criar Arquivo com todos os registros do CSV [Aviso: LENTO]");
-        System.out.println("[102][ DEBUG ] - Criar Arquivo com um número N de registros do CSV (primeiro -> último) [Aviso: LENTO]");
-        System.out.println("[107][ DEBUG ] - Ordenar a base de dados por Nome [Aviso: LENTO]");
+        System.out.println("[1] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId)");
+        System.out.println("[2] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId)");
+        System.out.println("[3] - Procurar por um atributo nos banco de dados [ID, appID, Nome]");
+        System.out.println("[4] - Criar um registro no banco de dados");
+        System.out.println("[5] - Remover um registro do banco de dados [por ID]");
+        System.out.println("[6] - Atualizar um registro do banco de dados [por ID]");
+        System.out.println("[7] - Ordenar o banco de dados por ID ou Nome");
+        System.out.println("[8] - Criar um backup do banco de dados atual");
+        System.out.println("[9] - Restaurar um backup para o banco de dados atual");
+        System.out.println("[10] - Imprimir em um arquivo todos os registros (ativos e inativos) do banco de dados (ID e Nome)");
+        System.out.println("[101][ DEBUG ] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
+        System.out.println("[102][ DEBUG ] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
+        System.out.println("[107][ DEBUG ] - Ordenar o banco de dados por Nome [Aviso: LENTO]");
         System.out.println("[0] - Encerrar o programa");
         System.out.println("--------------------------------------------------------");
     }

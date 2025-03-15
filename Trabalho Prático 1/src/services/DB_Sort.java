@@ -70,7 +70,7 @@ public class DB_Sort {
         //ordenação
         try (RandomAccessFile entrada = new RandomAccessFile("./src/resources/db_Output/gamesDB.db", "r")) {
             //contar tempo total da ordenação
-            double tempo_inicio = System.currentTimeMillis();
+            long tempo_inicio = System.currentTimeMillis();
               
             //posicionar ponteiro da entrada na pos 0
             entrada.seek(0);
@@ -222,6 +222,9 @@ public class DB_Sort {
 
             System.out.println("[Sort] -> Caminhos devidamente utilizados: " + caminhos_validos);
 
+            //contar quantidade de intercalações
+            int intercalacoes = 0;
+
             if (caminhos_validos > 1){
                 //intercalação própriamente dita
                 System.out.println("[Sort] -> Iniciando intercalação...");
@@ -269,7 +272,11 @@ public class DB_Sort {
                         if (caminhos[i].length() > 4)
                             caminhos_validos++;
                     }
-                    
+
+                    //verificação dupla para contar as intercalações
+                    if (caminhos_validos > 1){
+                        intercalacoes += 2;
+                    }
                 }
                 //deletar por completo os vetores auxiliares (intercalados)
                 for (int k = 0; k < intercalados.length; k++){
@@ -299,19 +306,18 @@ public class DB_Sort {
                     }
                 }
             }
+            //terminou a ordenação
 
             //fechar arquivo ordenado
             caminhos[0].close();
 
             //contar tempo total da ordenação
-            double tempo_fim = System.currentTimeMillis();
-            double tempo = (tempo_fim - tempo_inicio)/1000.0; // dividir por 1000 para contar em segundos
-                         
-            //terminou a ordenação
-            System.out.println("\n[Sort] -> A Base de dados foi ordenada com sucesso. \t Tempo decorrido: " + tempo + "\tTotal de Registros: " + total_registros + " \t[" + velocidade + " segmentos/s]");
-
-            System.out.println();
-              
+            long tempo_fim = System.currentTimeMillis();
+            long tempo = (tempo_fim - tempo_inicio); // dividir por 1000 para contar em segundos
+            
+            //exibir estatísticas
+            System.out.println("\n[Sort] -> A Base de dados foi ordenada com sucesso.");
+            System.out.println("[Sort] -> Intercalações registradas: " + intercalacoes + " \t Tempo decorrido: " + tempo/1000.0 + "s \tTotal de Segmentos: " + totalSegmentos + " \t Velocidade Média: " +String.format("%.1f",totalSegmentos/(tempo/1000.0)) + " segmentos/s \n");              
 
             //atualizar número de registros
             DataBase.totalGames = total_registros;
