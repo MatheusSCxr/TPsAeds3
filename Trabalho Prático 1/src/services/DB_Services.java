@@ -66,6 +66,9 @@ public class DB_Services {
                 // Fazer uma cópia do banco de dados do backup no arquivo atual de banco de dados
                 Files.copy(dbBackupFile.toPath(), dbOutputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 System.out.println("[Restore] -> Um backup do banco de dados foi restaurado com sucesso em (db_Output/gamesDB.db)");
+                //atualizar número de registros ativos e inativos
+                RandomAccessFile arquivo = new RandomAccessFile(dbOutputFile, "r");
+                countGames(arquivo);
             } else {
                 System.out.println("[INFO] -> Não foi possível encontrar um backup para restaurar em (db_Backup/gamesDB_backup.db)");
             }
@@ -84,7 +87,12 @@ public class DB_Services {
                 arquivo.seek(0);
                 arquivo.skipBytes(4); //pular ultimo id inserido
                 while (arquivo.getFilePointer() < arquivo.length()){
-                    arquivo.skipBytes(5); //pular lápides e tamanhos dos registros
+                    //ler se a lápide está ativa
+                    int lapide = arquivo.readUnsignedByte();
+                    if (lapide == 0xFF){
+                        writer.write("[INATIVO]\t");
+                    }
+                    arquivo.skipBytes(4);  //pular tamanho do registro
                     SteamGame jogo = DB_CRUD.readGame(arquivo);
                     writer.write("[ID:" + jogo.getId() + "]\t\t[" + jogo.getName() + "]\n");
                     conta++;
@@ -119,7 +127,7 @@ public class DB_Services {
         int totalActive = 0;
         int totalInactive = 0;
 
-        System.out.println("[INFO] -> Iniciando contagem de registros... Por favor, aguarde.");
+        System.out.println("[INFO] -> Iniciando contagem de registros... Por favor aguarde.");
         try {                
             //mover ponteiro para início do arquivo
             arquivo.seek(0);
