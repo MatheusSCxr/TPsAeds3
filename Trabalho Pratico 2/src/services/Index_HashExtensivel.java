@@ -512,7 +512,7 @@ public class Index_HashExtensivel<T extends models.RegistroHashExtensivel<T>> {
                       database.skipBytes(database.readInt());
                   }
                   conta++;
-                  UI.progressBar(conta, DataBase.totalGames, "[Index]", 8, 0);
+                  UI.progressBar(conta, DataBase.totalGames + DataBase.totalDeleted, "[Index]", 8, 0);
               } catch (Exception e) {
                   System.out.println(e);
               }

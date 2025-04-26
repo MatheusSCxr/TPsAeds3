@@ -130,10 +130,8 @@ public class DB_Services {
         System.out.println("[INFO] -> Iniciando contagem de registros... Por favor aguarde.");
         try {                
             //mover ponteiro para início do arquivo
-            arquivo.seek(0);
-
             //pular ultimo id inserido
-            arquivo.skipBytes(4);
+            arquivo.seek(4);
 
             while (arquivo.getFilePointer() < arquivo.length()){
                 //ler se a lápide está ativa

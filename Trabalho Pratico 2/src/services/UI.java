@@ -36,13 +36,13 @@ public class UI {
         System.out.print("Indexação atual -> ");
         switch (indexStatus) {
             case 1 -> System.out.print("[ Árvore B+ ]\n");
-            case 2 -> System.out.print("[ Hash Dinâmica ]\n");
+            case 2 -> System.out.print("[ Hash Extensível ]\n");
             case 3 -> System.out.print("[ Lista Invertida ]\n");
             default -> System.out.print("[ Nenhuma ]\n");
         }  
 
         System.out.println("\n[1] - Indexar por Árvore B+");
-        System.out.println("[2] - Indexar por Hash Dinâmica");
+        System.out.println("[2] - Indexar por Hash Extensível");
         System.out.println("[3] - Indexar por Lista Invetida");
 
         System.out.println("\n[0] - Voltar ao MENU");

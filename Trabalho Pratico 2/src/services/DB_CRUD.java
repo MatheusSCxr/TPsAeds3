@@ -449,75 +449,142 @@ public class DB_CRUD {
         //inicializar variáveis de pesquisa/deletar
         boolean achou = false;
         boolean resp = false;
+        SteamGame jogo = new SteamGame();
+        long pos_registro = -1;
 
         try (RandomAccessFile arquivo = new RandomAccessFile("./src/resources/db_Output/gamesDB.db", "rw")){
-            //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
+            switch (DataBase.indexStatus) {
+                case 0 -> {
+                    //pesquisa sequencial
 
-            //mover ponteiro para início do arquivo
-            arquivo.seek(0);
+                    //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
+                    //mover ponteiro para início do arquivo
+                    arquivo.seek(0);
 
-            //pular ultimo id inserido
-            arquivo.skipBytes(4);
-            int atual = 2;
+                    //pular ultimo id inserido
+                    arquivo.skipBytes(4);
+                    int atual = 2;
 
-            System.out.println("[Delete] -> Procurando registro com o ID especificado...");
-
-            while (arquivo.getFilePointer() < arquivo.length() && !achou){
-                //mostrar barra de progresso
-                UI.progressBar(atual, (DataBase.totalGames + 1),"[Search]",3,0);
-                
-                //ler se a lápide está ativa
-                int lapide = arquivo.readUnsignedByte();
-                if (lapide == 0xFF){
-                    //ler e pular o tamanho do registro a seguir
-                    arquivo.skipBytes(arquivo.readInt());
-                }
-                else{
-                    arquivo.skipBytes(4); //ignorar o tamanho e começar a leitura do registro
-                    SteamGame jogo = readGame(arquivo);
-                    if (jogo.getId() == delete_id){
-                        achou = true;
-                        System.out.println("[Search] -> Registro com o ID encontrado!");
-                        jogo.printAll();
-                        System.out.println("[Delete] -> Tem certeza que deseja deletar esse registro? Digite \"CONFIRMAR\" para deletar, ou qualquer outra tecla para cancelar");
-                        System.out.print("[Delete] -> Resposta: ");
-
-                        try {
-                            //inicializar o scanner para ler a confirmação
-                            Scanner leitor = new Scanner(System.in);
-                            String confirm = leitor.nextLine();
-                            if (confirm.toLowerCase().compareTo("confirmar") == 0) {
-                                System.out.println("[Delete] -> Removendo registro de ID [" + delete_id + "]");
-                                
-                                //ir para posição da lápide desse registro
-                                arquivo.seek(arquivo.getFilePointer() - jogo.measureSize() - 5); //posição atual - tamanho do registro -4 bytes (para o incluir o tamanho do registro) - 1 byte (onde está a lápide)
-                                
-                                //atualizar lápide como "inativa"
-                                arquivo.writeByte(0xFF);
-                                
-                                //indicar que o registro foi removido com sucesso
-                                resp = true;
-                                
-                                //decrementar numero de jogos ativos na base de dados
-                                DataBase.totalGames--;
-                                
-                                //incrementar numero de jogos inativos na base de dados
-                                DataBase.totalDeleted++;
-                            } else {
-                                System.out.println("[Delete] -> Remoção cancelada.");
-                            }
-                        }catch (InputMismatchException e){
-                            System.out.println("[ERRO] -> Não foi possível ler o valor digitado");
-                            System.out.println(e);
+                    while (arquivo.getFilePointer() < arquivo.length() && !achou){
+                        //mostrar barra de progresso
+                        UI.progressBar(atual, (DataBase.totalGames + 1),"[Search]",4,0);
+                        
+                        //ler se a lápide está ativa
+                        int lapide = arquivo.readUnsignedByte();
+                        if (lapide == 0xFF){
+                            //ler e pular o tamanho do registro a seguir
+                            arquivo.skipBytes(arquivo.readInt());
                         }
+                        else{
+                            pos_registro = arquivo.getFilePointer();
+                            jogo = readGame(arquivo);
+                            if (jogo.getId() == delete_id){
+                                achou = true; //indicar que o registro foi encontrado
+                                System.out.println("[Search] -> Registro encontrado com sucesso! ");
+                            }
+                        }
+                        atual++;
                     }
+                }
+                case 1 -> {
+                    //pesquisa na árvore B+
+                    try {
+                        ArrayList<ArvoreElemento> lista = DataBase.arvore.read(new ArvoreElemento(delete_id, -1));
+                        if (!lista.isEmpty() ){
+                            System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
+                            for (int i = 0; i < lista.size(); i++){
+                                jogo = DB_CRUD.readGame_Address(lista.get(i).getAddress()); //obter o jogo
+                                pos_registro = lista.get(i).getAddress(); //obter endereço do registro
+
+                                achou = true;
+                            }
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na Árvore.");
+                            achou = false;
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
+                case 2 -> {
+                    //pesquisa na hash extensível
+                    try {
+                        HashElemento registro = DataBase.hash.read(HashElemento.hash(delete_id));
+                        if (registro != null ){
+                            System.out.println("[Index] -> Registro encontrado com sucesso na Hash Extensível: ");
+                            jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
+                            pos_registro = registro.getAddress(); //obter endereço do registro
+
+                            achou = true;
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na Hash.");
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
+                case 3 ->{
 
                 }
-
-                atual++;
-    
+                default -> {
+                    System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
+                    DataBase.indexStatus = 0; //medida preventiva
+                }
             }
-            if (!achou){
+
+            //caso tenha encontrado o registro
+            if (achou){
+                jogo.printAll();
+                System.out.println("[Delete] -> Tem certeza que deseja deletar esse registro? Digite \"CONFIRMAR\" para deletar, ou qualquer outra tecla para cancelar");
+                System.out.print("[Delete] -> Resposta: ");
+
+                try {
+                    //inicializar o scanner para ler a confirmação
+                    Scanner leitor = new Scanner(System.in);
+                    String confirm = leitor.nextLine();
+                    if (confirm.toLowerCase().compareTo("confirmar") == 0) {
+                        System.out.println("[Delete] -> Removendo registro de ID [" + delete_id + "]");
+                        
+                        //ir para posição da lápide desse registro
+                        arquivo.seek(pos_registro - 5); //posição do registro - 4 bytes (tamanho do registro) - 1 byte (onde está a lápide)
+                        
+                        //atualizar lápide como "inativa"
+                        arquivo.writeByte(0xFF);
+                        
+                        //remover o registro da indexação, se existir
+                        switch (DataBase.indexStatus) {
+                            case 1 -> {
+                                if (DataBase.arvore.delete(new ArvoreElemento(delete_id, -1)))
+                                    System.out.println("removido da árvore com sucesso");
+                            }
+                            case 2 ->{
+                                if (DataBase.hash.delete(delete_id))
+                                    System.out.println("removido da hash com sucesso");
+                            }
+                            case 3 ->{
+                                
+                            }
+                            default -> {}
+                        }
+
+                        //indicar que o registro foi removido com sucesso
+                        resp = true;
+                        
+                        //decrementar numero de jogos ativos na base de dados
+                        DataBase.totalGames--;
+                        
+                        //incrementar numero de jogos inativos na base de dados
+                        DataBase.totalDeleted++;
+                    } else {
+                        System.out.println("[Delete] -> Remoção cancelada.");
+                    }
+                }catch (InputMismatchException e){
+                    System.out.println("[ERRO] -> Não foi possível ler o valor digitado");
+                    System.out.println(e);
+                }
+            } else {
                 System.out.println("\n[Delete] -> Não foi possível localizar o registro a ser excluído.");
             }
         }
@@ -535,15 +602,6 @@ public class DB_CRUD {
         boolean atualizado = false;
 
         try (RandomAccessFile arquivo = new RandomAccessFile("./src/resources/db_Output/gamesDB.db", "rw")){
-            //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
-
-            //mover ponteiro para início do arquivo
-            arquivo.seek(0);
-
-            //pular ultimo id inserido
-            arquivo.skipBytes(4);
-            int atual = 2;
-
             System.out.println("[Update] -> Procurando registro com o ID especificado...");
 
             //inicializar objeto jogo
@@ -556,6 +614,15 @@ public class DB_CRUD {
             switch (DataBase.indexStatus) {
                 case 0 -> {
                     //pesquisa sequencial
+
+                    //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
+                    //mover ponteiro para início do arquivo
+                    arquivo.seek(0);
+
+                    //pular ultimo id inserido
+                    arquivo.skipBytes(4);
+                    int atual = 2;
+
                     while (arquivo.getFilePointer() < arquivo.length() && !achou){
                         //mostrar barra de progresso
                         UI.progressBar(atual, (DataBase.totalGames + 1),"[Search]",4,0);
@@ -574,7 +641,7 @@ public class DB_CRUD {
                             jogo = readGame(arquivo);
                             if (jogo.getId() == update_id){
                                 achou = true; //indicar que o registro foi encontrado
-                                System.out.println("[Search] -> Registro com sucesso na Base de dados sequencial: ");
+                                System.out.println("[Search] -> Registro com sucesso! ");
                             }
                         }
                         atual++;
@@ -588,7 +655,7 @@ public class DB_CRUD {
                             System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
                             for (int i = 0; i < lista.size(); i++){
                                 jogo = DB_CRUD.readGame_Address(lista.get(i).getAddress()); //obter o jogo
-                                pos_registro = lista.get(i).getAddress(); //obter endereço do jogo
+                                pos_registro = lista.get(i).getAddress(); //obter endereço do registro
 
                                 //obter tamanho do registro
                                 arquivo.seek(pos_registro - 4);
@@ -611,7 +678,7 @@ public class DB_CRUD {
                         if (registro != null ){
                             System.out.println("[Index] -> Registro encontrado com sucesso na Hash Extensível: ");
                             jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
-                            pos_registro = registro.getAddress(); //obter endereço do jogo
+                            pos_registro = registro.getAddress(); //obter endereço do registro
                             //obter tamanho do registro
                             arquivo.seek(pos_registro - 4);
                             old_tamanho = arquivo.readInt();
@@ -858,6 +925,9 @@ public class DB_CRUD {
                                         //mudar a lápide para indicar que o antigo registro deve ser desconsiderado
                                         arquivo.writeByte(0xFF); //lapide inativa
 
+                                        //atualizar número de registros inativos
+                                        DataBase.totalDeleted++;
+
                                         //obter endereço do final do arquivo
                                         long endereco = (arquivo.length() + 5);//endereço final + lápide(byte) + tamanho(int -> 4 bytes) do registro
 
@@ -892,9 +962,6 @@ public class DB_CRUD {
 
                                             //metadados
                                             bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
-
-                                            //atualizar número de registros inativos
-                                            DataBase.totalDeleted++;
                                             
                                             bufferData.writeInt(jogo.measureSize());
                                             
@@ -937,7 +1004,6 @@ public class DB_CRUD {
                             
                                             //escrever no arquivo os dados do buffer
                                             arquivo.write(buffer.toByteArray());
-
                                         }
                                     }
                                     
