@@ -33,7 +33,8 @@ public class DB_Load {
                 file.delete();
             }
 
-            //atualizar status de indexação do banco de dados
+            //Excluir indexação atual
+            DataBase.clearIndex();
             DataBase.indexStatus = 0;
             
             //definir o local de saída com os dados extraídos

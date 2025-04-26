@@ -25,7 +25,7 @@ public class DB_Services {
                 System.out.println("[Backup] -> Iniciando backup...");
                 //fazer uma copia do banco de dados atual no arquivo de backup
                 Files.copy(dbOutputFile.toPath(), dbBackupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("[INFO] -> Um backup o banco de dados foi criado com sucesso em (./src/resources/db_Backup/gamesDB_backup.db)");
+                System.out.println("[INFO] -> Um backup do banco de dados foi criado com sucesso em (./src/resources/db_Backup/gamesDB_backup.db)");
     
                 //substituir gamesDB.db por caminho_0.db
                 File dbSortFile = new File("./src/resources/db_Sort/caminho_0.db");

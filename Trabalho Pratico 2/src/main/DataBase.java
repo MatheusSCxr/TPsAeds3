@@ -29,6 +29,7 @@ public class DataBase {
                             arvore.arquivo.close();
                             file.delete();
                         }
+                        System.out.println("[Index] -> Indexação por Árvore B+ removida com sucesso");
                     }
                 }
                 case 2 -> {
@@ -43,6 +44,7 @@ public class DataBase {
                             hash.arqCestos.close();
                             file2.delete();
                         }
+                        System.out.println("[Index] -> Indexação por Hash Extensível removida com sucesso");
                     }
                 }
                 default -> System.out.println("[INFO] Não foram encontrados índices antigos");
@@ -171,7 +173,7 @@ public class DataBase {
                                             // ArvoreElemento
                                             ArrayList<ArvoreElemento> lista = arvore.read(new ArvoreElemento(id, -1));
                                             if (!lista.isEmpty() ){
-                                                System.out.println("Registro encontrado com sucesso: ");
+                                                System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
                                                 for (int i = 0; i < lista.size(); i++)
                                                     DB_CRUD.readGame_Address(lista.get(i).getAddress()).printAll();
                                             }
@@ -188,7 +190,7 @@ public class DataBase {
                                             int id = leitor.nextInt();
                                             HashElemento registro = hash.read(HashElemento.hash(id));
                                             if (registro != null ){
-                                                System.out.println("Registro encontrado com sucesso: ");
+                                                System.out.println("[Index] -> Registro encontrado com sucesso na Hash Extensível: ");
                                                 DB_CRUD.readGame_Address(registro.getAddress()).printAll();
                                             }
                                             else{
@@ -249,7 +251,7 @@ public class DataBase {
                         case 7 -> {
                             if (hasData){
                                 try {                                    
-                                    System.out.println("[Sort] -> Digite qual será o atributo a ser ordenado:\n");
+                                    System.out.println("[Sort] -> Digite o atributo a ser ordenado:\n");
                                     System.out.println("                [1] - ID                   [2] - NOME");
                                     System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
                                     int ordenacao = leitor.nextInt();
@@ -293,20 +295,30 @@ public class DataBase {
                                     case 1 -> {
                                         System.out.print("[Index] -> Digite a ordem da Árvore B+: ");
                                         int ordem = leitor.nextInt();
-                                        System.out.println("[Index] -> Iniciando indexação por Árvore B+...");
-                                        arvore = Index_ArvoreBMais.IndexDataBase(arvore,ordem);
+                                        if (ordem < 1){
+                                            System.out.println("[ERRO] -> Ordem muito pequena ou inválida");
+                                        }
+                                        else{
+                                            System.out.println("[Index] -> Iniciando indexação por Árvore B+...");
+                                            arvore = Index_ArvoreBMais.IndexDataBase(arvore,ordem);
+                                        }
                                     }
                                     case 2 -> {
                                         System.out.print("[Index] -> Digite a quantidade de registros por cesto na Hash Extensível: ");
                                         int quantDados = leitor.nextInt();
-                                        System.out.println("[Index] -> Iniciando indexação por Hash Extensível...");
-                                        hash = Index_HashExtensivel.IndexDataBase(hash,quantDados);
+                                        if (quantDados < 1){
+                                            System.out.println("[ERRO] -> Quantidade de registros por cesto muito pequena ou inválida");
+                                        }
+                                        else{
+                                            System.out.println("[Index] -> Iniciando indexação por Hash Extensível...");
+                                            hash = Index_HashExtensivel.IndexDataBase(hash,quantDados);
+                                        }
                                     }
                                     case 3 -> {
 
                                     }
                                     default -> {
-                                        System.out.println("[ERRO] -> Entrada inválida");
+                                        System.out.println("[ERRO] -> Opção inválida");
                                     }
                                 }
                             } else{

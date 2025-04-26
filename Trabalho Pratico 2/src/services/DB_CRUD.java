@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 import main.DataBase;
+import models.ArvoreElemento;
+import models.HashElemento;
 import models.SteamGame;
 
 public class DB_CRUD {
@@ -544,330 +546,416 @@ public class DB_CRUD {
 
             System.out.println("[Update] -> Procurando registro com o ID especificado...");
 
-            while (arquivo.getFilePointer() < arquivo.length() && !achou){
-                //mostrar barra de progresso
-                UI.progressBar(atual, (DataBase.totalGames + 1),"[Search]",4,0);
-                
-                //gravar a posição do registro atual
-                long pos_registro = arquivo.getFilePointer();
+            //inicializar objeto jogo
+            SteamGame jogo = new SteamGame();
+            int old_tamanho = 0; //variável de controle para atualização da posição do registro
+            long pos_registro = -1; //variável de controle para gravar a posição atual do registro
+            boolean resp = false; //variável de controle para indicar se existe alguma atualização
 
-                //ler se a lápide está ativa
-                int lapide = arquivo.readUnsignedByte();
-                if (lapide == 0xFF){
-                    //ler e pular o tamanho do registro a seguir
-                    arquivo.skipBytes(arquivo.readInt());
-                }
-                else{
-                    int old_tamanho = arquivo.readInt(); //ler o tamanho do registro para tomar a decisão correta no momento da atualização
-                    SteamGame jogo = readGame(arquivo);
-                    boolean resp = false;
-                    if (jogo.getId() == update_id){
-                        achou = true; //indicar que o registro foi encontrado
-                        System.out.println("[Search] -> Registro com o ID encontrado!");
-                        jogo.printAll();
 
-                        //variável de controle do loop
-                        boolean stop = false;
-                        try {
-                            //inicializar o scanner para ler a opção
-                            Scanner leitor = new Scanner(System.in);
-
-                            //loop menu de atualização
-                            while (!stop){
-                                //exibir interface de opções para atualizar
-                                UI.update(jogo);
-
-                                try {
-                                    int option = leitor.nextInt();
-                                    switch (option) {
-                                        case 1 -> {
-                                            System.out.println("[Update] -> Valor atual do appId: " + jogo.getAppid());
-                                            System.out.print("[Update] -> Digite o novo appId: ");
-                                            int appId = leitor.nextInt();
-                                            jogo.setAppid(appId);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 2 -> {
-                                            System.out.println("[Update] -> Valor atual do nome: " + jogo.getName());
-                                            System.out.print("[Update] -> Digite o novo nome: ");
-                                            leitor.nextLine();
-                                            String nome = leitor.nextLine();
-                                            jogo.setName(nome);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 3 -> {
-                                            System.out.println("[Update] -> Valor atual da data de lançamento: " + jogo.getReleaseDateString());
-                                            System.out.print("[Update] -> Digite a nova data de lançamento (AAAA-MM-DD): ");
-                                            String data = leitor.next();
-                                            //converter data e atualizar no registro
-                                            jogo.setReleaseDate(DB_Services.convertString_Unix(data));
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 4 -> {
-                                            System.out.println("[Update] -> Valor atual se está em inglês: " + jogo.getEnglish());
-                                            System.out.print("[Update] -> Está em inglês? (true (1)/false (0) ): ");
-                                            boolean emIngles = leitor.nextBoolean();
-                                            jogo.setEnglish(emIngles);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 5 -> {
-                                            System.out.println("[Update] -> Valor atual do desenvolvedor: " + jogo.getDeveloper());
-                                            System.out.print("[Update] -> Digite o novo desenvolvedor: ");
-                                            String desenvolvedor = leitor.next();
-                                            jogo.setDeveloper(desenvolvedor);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 6 -> {
-                                            System.out.println("[Update] -> Valor atual do distribuidor: " + jogo.getPublisher());
-                                            System.out.print("[Update] -> Digite o novo disitribuidor: ");
-                                            String publisher = leitor.next();
-                                            jogo.setPublisher(publisher);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 7 -> {
-                                            System.out.println("[Update] -> Valor atual das plataformas: " + jogo.getPlatforms());
-                                            System.out.print("[Update] -> Digite as novas plataformas (tamanho fixo de " + jogo.getPlatformsLenght() + " caracteres): ");
-                                            String plataformas = leitor.next();
-                                            if (jogo.setPlatforms(plataformas))
-                                                resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 8 -> {
-                                            System.out.println("[Update] -> Valor atual da idade requerida: " + jogo.getRequiredAge());
-                                            System.out.print("[Update] -> Digite a nova idade requerida: ");
-                                            int idade = leitor.nextInt();
-                                            jogo.setRequiredAge(idade);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 9 -> {
-                                            //obter numero de elementos na lista
-                                            int max = jogo.getCategories().size();
-
-                                            //inicializar e copiar esses elementos para uma nova lista
-                                            ArrayList<String> categories_list = new ArrayList<>();
-                                            categories_list.addAll(jogo.getCategories());
-
-                                            //atualizar, ou não, cada elemento da lista
-                                            System.out.println("[Update] -> Exibindo categorias atuais");
-
-                                            //percorrer a lista inteira
-                                            for (int i = 0; i < max; i++) {
-                                                System.out.println("[Update] -> Categoria [" + i +"] atual: " + categories_list.get(i));
-                                                System.out.print("[Update] -> Digite [1] para alterar ou [0] para a próxima categoria: ");
-                                                int alterar = leitor.nextInt();
-                                                
-                                                //confirmar a atualização
-                                                if (alterar == 1) {
-                                                    System.out.print("[Update] -> Digite o novo valor: ");
-                                                    String valor = leitor.next();
-
-                                                    //atualizar o elemento em questão
-                                                    categories_list.set(i, valor);
-                                                }
-                                            }
-                                            //atualizar lista do objeto
-                                            jogo.setCategories(categories_list);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 10 -> {
-                                            //obter o tamanho da lista e criar uma cópia
-                                            int max = jogo.getGenres().size();
-                                            ArrayList<String> generos_list = new ArrayList<>();
-                                            generos_list.addAll(jogo.getGenres());
-                                            System.out.println("[Update] -> Exibindo gêneros atuais");
-
-                                            //atualizar, ou não, individualmente os elementos da lista
-                                            for (int i = 0; i < max; i++) {
-                                                System.out.println("[Update] -> Gênero [" + i +"] atual: " + generos_list.get(i));
-                                                System.out.print("[Update] -> Digite [1] para alterar ou [0] para o próximo gênero: ");
-                                                int alterar = leitor.nextInt();
-
-                                                //confirmar a atualização
-                                                if (alterar == 1) {
-                                                    System.out.print("[Update] -> Digite o novo valor: ");
-                                                    String valor = leitor.next();
-                                                    //atualizar o elemento em questão
-                                                    generos_list.set(i, valor);
-                                                }
-                                            }
-                                            //atualizar lista do objeto
-                                            jogo.setGenres(generos_list);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 11 -> {
-                                            //obter tamanho da lista e criar uma cópia
-                                            int max = jogo.getSteamspyTags().size();
-                                            ArrayList<String> tags_list = new ArrayList<>();
-                                            tags_list.addAll(jogo.getSteamspyTags());
-
-                                            System.out.println("[Update] -> Exibindo tags atuais");
-                                            //atualizar, ou não, individualmente os elementos da lista
-                                            for (int i = 0; i < max; i++) {
-                                                System.out.println("[Update] -> Tag [" + i +"] atual: " + tags_list.get(i));
-                                                System.out.print("[Update] -> Digite [1] para alterar ou [0] para a próxima spytag: ");
-                                                int alterar = leitor.nextInt();
-
-                                                //confirmar atualização
-                                                if (alterar == 1) {
-                                                    System.out.print("[Update] -> Digite o novo valor: ");
-                                                    String valor = leitor.next();
-                                                    //atualizar o elemento em questão
-                                                    tags_list.set(i, valor);
-                                                }
-                                            }
-                                            //atualizar lista do objeto
-                                            jogo.setSteamspyTags(tags_list);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 12 -> {
-                                            System.out.println("[Update] -> Valor atual de conquistas: " + jogo.getAchievements());
-                                            System.out.print("[Update] -> Digite o novo número de conquistas: ");
-                                            int conquistas = leitor.nextInt();
-                                            jogo.setAchievements(conquistas);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 13 -> {
-                                            System.out.println("[Update] -> Valor atual de avaliações positivas: " + jogo.getPositiveRatings());
-                                            System.out.print("[Update] -> Digite o novo número de avaliações positivas: ");
-                                            int avaliacoesPositivas = leitor.nextInt();
-                                            jogo.setPositiveRatings(avaliacoesPositivas);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 14 -> {
-                                            System.out.println("[Update] -> Valor atual de avaliações negativas: " + jogo.getNegativeRatings());
-                                            System.out.print("[Update] -> Digite o novo número de avaliações negativas: ");
-                                            int avaliacoesNegativas = leitor.nextInt();
-                                            jogo.setNegativeRatings(avaliacoesNegativas);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 15 -> {
-                                            System.out.println("[Update] -> Valor atual do tempo médio de jogo: " + jogo.getAveragePlaytime());
-                                            System.out.print("[Update] -> Digite o novo tempo médio de jogo: ");
-                                            int tempoMedio = leitor.nextInt();
-                                            jogo.setAveragePlaytime(tempoMedio);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 16 -> {
-                                            System.out.println("[Update] -> Valor atual do tempo mediano de jogo: " + jogo.getMedianPlaytime());
-                                            System.out.print("[Update] -> Digite o novo tempo mediano de jogo: ");
-                                            int tempoMediano = leitor.nextInt();
-                                            jogo.setMedianPlaytime(tempoMediano);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 17 -> {
-                                            System.out.println("[Update] -> Valor atual dos proprietários: " + jogo.getOwners());
-                                            System.out.print("[Update] -> Digite o novo número de proprietários (\"min\"-\"max\"): ");
-                                            String proprietarios = leitor.next();
-                                            jogo.setOwners(proprietarios);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 18 -> {
-                                            System.out.println("[Update] -> Valor atual do preço: " + jogo.getPrice());
-                                            System.out.print("[Update] -> Digite o novo preço: ");
-                                            float preco = leitor.nextFloat();
-                                            jogo.setPrice(preco);
-                                            resp = true; //indicar que o registro foi atualizado
-                                        }
-                                        case 0 -> {
-                                            System.out.println("[Update] -> Voltando ao menu inicial...");
-                                            stop = true; //parar loop
-                                        }
-                                        default -> System.out.println("[Update] -> Opção inválida!");
-                                    }
-
-                                    if (resp){
-                                        try {
-                                            System.out.println("[Update] -> Atualizando o registro no arquivo...");
-
-                                            //mover o ponteiro para onde o registro estava antes de ser atualizado
-                                            arquivo.seek(pos_registro);
-
-                                            //identificar se o registro atualizado está maior (em BYTES) que o registro antigo
-
-                                            if (jogo.measureSize() > old_tamanho){
-                                                //mudar a lápide para indicar que o antigo registro deve ser desconsiderado
-                                                arquivo.writeByte(0xFF); //lapide inativa
-
-                                                //gravar o registro atualizado no final do arquivo
-                                                if (writeGame(arquivo, jogo)){
-                                                    atualizado = true;
-                                                    System.out.println("[Update] -> Registro atualizado com sucesso");
-                                                }
-                                            } else{ //se o registro ter o tamanho igual ou menor, atualizar na mesma posição
-                                                try (ByteArrayOutputStream buffer = new ByteArrayOutputStream(); DataOutputStream bufferData = new DataOutputStream(buffer)){
-
-                                                    //metadados
-                                                    bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
-
-                                                    //atualizar número de registros inativos
-                                                    DataBase.totalDeleted++;
-                                                    
-                                                    bufferData.writeInt(jogo.measureSize());
-                                                    
-                                                    //dados
-                                                    bufferData.writeInt(jogo.getId());
-                                                    bufferData.writeInt(jogo.getAppid());
-                                                    bufferData.writeUTF(jogo.getName());
-                                                    bufferData.writeLong(jogo.getReleaseDateUnix());
-                                                    bufferData.writeBoolean(jogo.getEnglish());
-                                                    bufferData.writeUTF(jogo.getDeveloper());
-                                                    bufferData.writeUTF(jogo.getPublisher());
-                                                    bufferData.writeUTF(jogo.getPlatforms());
-                                                    bufferData.writeInt(jogo.getRequiredAge());
-                                    
-                                                    //escrever lista de categorias
-                                                    bufferData.writeInt(jogo.getCategories().size());//indicar tamanho da lista
-                                                    for (String category : jogo.getCategories()) {
-                                                        bufferData.writeUTF(category);//elementos da lista
-                                                    }
-                                    
-                                                    //escrever lista de gêneros
-                                                    bufferData.writeInt(jogo.getGenres().size());
-                                                    for (String genre : jogo.getGenres()) {
-                                                        bufferData.writeUTF(genre);
-                                                    }
-                                    
-                                                    //ecrever lista de spytags
-                                                    bufferData.writeInt(jogo.getSteamspyTags().size());
-                                                    for (String tag : jogo.getSteamspyTags()) {
-                                                        bufferData.writeUTF(tag);
-                                                    }
-                                    
-                                                    bufferData.writeInt(jogo.getAchievements());
-                                                    bufferData.writeInt(jogo.getPositiveRatings());
-                                                    bufferData.writeInt(jogo.getNegativeRatings());
-                                                    bufferData.writeInt(jogo.getAveragePlaytime());
-                                                    bufferData.writeInt(jogo.getMedianPlaytime());
-                                                    bufferData.writeUTF(jogo.getOwners());
-                                                    bufferData.writeFloat(jogo.getPrice());
-                                    
-                                                    //escrever no arquivo os dados do buffer
-                                                    arquivo.write(buffer.toByteArray());
-
-                                                }
-                                            }
-                                            
-                                        } catch (IOException e) {
-                                            System.out.println("[ERRO] -> Não foi possível atualizar o registro do arquivo [" + e + "]");
-                                        }
-                                        resp = false;
-                                    }
-
-                                } catch (InputMismatchException e){
-                                    System.out.println("[ERRO] -> Valor digitado inválido para o atributo [" + e + "]");
-                                }
+            switch (DataBase.indexStatus) {
+                case 0 -> {
+                    //pesquisa sequencial
+                    while (arquivo.getFilePointer() < arquivo.length() && !achou){
+                        //mostrar barra de progresso
+                        UI.progressBar(atual, (DataBase.totalGames + 1),"[Search]",4,0);
+                        
+                        //gravar a posição do registro atual
+                        pos_registro = arquivo.getFilePointer();
+        
+                        //ler se a lápide está ativa
+                        int lapide = arquivo.readUnsignedByte();
+                        if (lapide == 0xFF){
+                            //ler e pular o tamanho do registro a seguir
+                            arquivo.skipBytes(arquivo.readInt());
+                        }
+                        else{
+                            old_tamanho = arquivo.readInt(); //ler o tamanho do registro para tomar a decisão correta no momento da atualização
+                            jogo = readGame(arquivo);
+                            if (jogo.getId() == update_id){
+                                achou = true; //indicar que o registro foi encontrado
+                                System.out.println("[Search] -> Registro com sucesso na Base de dados sequencial: ");
                             }
-                        }catch (InputMismatchException e){
-                            System.out.println("[ERRO] -> Não foi possível ler o valor digitado");
-                            System.out.println(e);
+                        }
+                        atual++;
+                    }
+                }
+                case 1 -> {
+                    //pesquisa na árvore B+
+                    try {
+                        ArrayList<ArvoreElemento> lista = DataBase.arvore.read(new ArvoreElemento(update_id, -1));
+                        if (!lista.isEmpty() ){
+                            System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
+                            for (int i = 0; i < lista.size(); i++){
+                                jogo = DB_CRUD.readGame_Address(lista.get(i).getAddress()); //obter o jogo
+                                pos_registro = lista.get(i).getAddress(); //obter endereço do jogo
+
+                                //obter tamanho do registro
+                                arquivo.seek(pos_registro - 4);
+                                old_tamanho = arquivo.readInt();
+                                achou = true;
+                            }
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na Árvore.");
+                            achou = false;
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
+                case 2 -> {
+                    //pesquisa na hash extensível
+                    try {
+                        HashElemento registro = DataBase.hash.read(HashElemento.hash(update_id));
+                        if (registro != null ){
+                            System.out.println("[Index] -> Registro encontrado com sucesso na Hash Extensível: ");
+                            jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
+                            pos_registro = registro.getAddress(); //obter endereço do jogo
+                            //obter tamanho do registro
+                            arquivo.seek(pos_registro - 4);
+                            old_tamanho = arquivo.readInt();
+                            achou = true;
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na Hash.");
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
+                }
+                case 3 ->{
+
+                }
+                default -> {
+                    System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
+                    DataBase.indexStatus = 0; //medida preventiva
+                }
+            }
+
+            //se um jogo foi encontrado na pesquisa
+            if (achou){
+                jogo.printAll();
+
+                //variável de controle do loop
+                boolean stop = false;
+                try {
+                    //inicializar o scanner para ler a opção
+                    Scanner leitor = new Scanner(System.in);
+
+                    //loop menu de atualização
+                    while (!stop){
+                        //exibir interface de opções para atualizar
+                        UI.update(jogo);
+
+                        try {
+                            int option = leitor.nextInt();
+                            switch (option) {
+                                case 1 -> {
+                                    System.out.println("[Update] -> Valor atual do appId: " + jogo.getAppid());
+                                    System.out.print("[Update] -> Digite o novo appId: ");
+                                    int appId = leitor.nextInt();
+                                    jogo.setAppid(appId);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 2 -> {
+                                    System.out.println("[Update] -> Valor atual do nome: " + jogo.getName());
+                                    System.out.print("[Update] -> Digite o novo nome: ");
+                                    leitor.nextLine();
+                                    String nome = leitor.nextLine();
+                                    jogo.setName(nome);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 3 -> {
+                                    System.out.println("[Update] -> Valor atual da data de lançamento: " + jogo.getReleaseDateString());
+                                    System.out.print("[Update] -> Digite a nova data de lançamento (AAAA-MM-DD): ");
+                                    String data = leitor.next();
+                                    //converter data e atualizar no registro
+                                    jogo.setReleaseDate(DB_Services.convertString_Unix(data));
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 4 -> {
+                                    System.out.println("[Update] -> Valor atual se está em inglês: " + jogo.getEnglish());
+                                    System.out.print("[Update] -> Está em inglês? (true (1)/false (0) ): ");
+                                    boolean emIngles = leitor.nextBoolean();
+                                    jogo.setEnglish(emIngles);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 5 -> {
+                                    System.out.println("[Update] -> Valor atual do desenvolvedor: " + jogo.getDeveloper());
+                                    System.out.print("[Update] -> Digite o novo desenvolvedor: ");
+                                    String desenvolvedor = leitor.next();
+                                    jogo.setDeveloper(desenvolvedor);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 6 -> {
+                                    System.out.println("[Update] -> Valor atual do distribuidor: " + jogo.getPublisher());
+                                    System.out.print("[Update] -> Digite o novo disitribuidor: ");
+                                    String publisher = leitor.next();
+                                    jogo.setPublisher(publisher);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 7 -> {
+                                    System.out.println("[Update] -> Valor atual das plataformas: " + jogo.getPlatforms());
+                                    System.out.print("[Update] -> Digite as novas plataformas (tamanho fixo de " + jogo.getPlatformsLenght() + " caracteres): ");
+                                    String plataformas = leitor.next();
+                                    if (jogo.setPlatforms(plataformas))
+                                        resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 8 -> {
+                                    System.out.println("[Update] -> Valor atual da idade requerida: " + jogo.getRequiredAge());
+                                    System.out.print("[Update] -> Digite a nova idade requerida: ");
+                                    int idade = leitor.nextInt();
+                                    jogo.setRequiredAge(idade);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 9 -> {
+                                    //obter numero de elementos na lista
+                                    int max = jogo.getCategories().size();
+
+                                    //inicializar e copiar esses elementos para uma nova lista
+                                    ArrayList<String> categories_list = new ArrayList<>();
+                                    categories_list.addAll(jogo.getCategories());
+
+                                    //atualizar, ou não, cada elemento da lista
+                                    System.out.println("[Update] -> Exibindo categorias atuais");
+
+                                    //percorrer a lista inteira
+                                    for (int i = 0; i < max; i++) {
+                                        System.out.println("[Update] -> Categoria [" + i +"] atual: " + categories_list.get(i));
+                                        System.out.print("[Update] -> Digite [1] para alterar ou [0] para a próxima categoria: ");
+                                        int alterar = leitor.nextInt();
+                                        
+                                        //confirmar a atualização
+                                        if (alterar == 1) {
+                                            System.out.print("[Update] -> Digite o novo valor: ");
+                                            String valor = leitor.next();
+
+                                            //atualizar o elemento em questão
+                                            categories_list.set(i, valor);
+                                        }
+                                    }
+                                    //atualizar lista do objeto
+                                    jogo.setCategories(categories_list);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 10 -> {
+                                    //obter o tamanho da lista e criar uma cópia
+                                    int max = jogo.getGenres().size();
+                                    ArrayList<String> generos_list = new ArrayList<>();
+                                    generos_list.addAll(jogo.getGenres());
+                                    System.out.println("[Update] -> Exibindo gêneros atuais");
+
+                                    //atualizar, ou não, individualmente os elementos da lista
+                                    for (int i = 0; i < max; i++) {
+                                        System.out.println("[Update] -> Gênero [" + i +"] atual: " + generos_list.get(i));
+                                        System.out.print("[Update] -> Digite [1] para alterar ou [0] para o próximo gênero: ");
+                                        int alterar = leitor.nextInt();
+
+                                        //confirmar a atualização
+                                        if (alterar == 1) {
+                                            System.out.print("[Update] -> Digite o novo valor: ");
+                                            String valor = leitor.next();
+                                            //atualizar o elemento em questão
+                                            generos_list.set(i, valor);
+                                        }
+                                    }
+                                    //atualizar lista do objeto
+                                    jogo.setGenres(generos_list);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 11 -> {
+                                    //obter tamanho da lista e criar uma cópia
+                                    int max = jogo.getSteamspyTags().size();
+                                    ArrayList<String> tags_list = new ArrayList<>();
+                                    tags_list.addAll(jogo.getSteamspyTags());
+
+                                    System.out.println("[Update] -> Exibindo tags atuais");
+                                    //atualizar, ou não, individualmente os elementos da lista
+                                    for (int i = 0; i < max; i++) {
+                                        System.out.println("[Update] -> Tag [" + i +"] atual: " + tags_list.get(i));
+                                        System.out.print("[Update] -> Digite [1] para alterar ou [0] para a próxima spytag: ");
+                                        int alterar = leitor.nextInt();
+
+                                        //confirmar atualização
+                                        if (alterar == 1) {
+                                            System.out.print("[Update] -> Digite o novo valor: ");
+                                            String valor = leitor.next();
+                                            //atualizar o elemento em questão
+                                            tags_list.set(i, valor);
+                                        }
+                                    }
+                                    //atualizar lista do objeto
+                                    jogo.setSteamspyTags(tags_list);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 12 -> {
+                                    System.out.println("[Update] -> Valor atual de conquistas: " + jogo.getAchievements());
+                                    System.out.print("[Update] -> Digite o novo número de conquistas: ");
+                                    int conquistas = leitor.nextInt();
+                                    jogo.setAchievements(conquistas);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 13 -> {
+                                    System.out.println("[Update] -> Valor atual de avaliações positivas: " + jogo.getPositiveRatings());
+                                    System.out.print("[Update] -> Digite o novo número de avaliações positivas: ");
+                                    int avaliacoesPositivas = leitor.nextInt();
+                                    jogo.setPositiveRatings(avaliacoesPositivas);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 14 -> {
+                                    System.out.println("[Update] -> Valor atual de avaliações negativas: " + jogo.getNegativeRatings());
+                                    System.out.print("[Update] -> Digite o novo número de avaliações negativas: ");
+                                    int avaliacoesNegativas = leitor.nextInt();
+                                    jogo.setNegativeRatings(avaliacoesNegativas);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 15 -> {
+                                    System.out.println("[Update] -> Valor atual do tempo médio de jogo: " + jogo.getAveragePlaytime());
+                                    System.out.print("[Update] -> Digite o novo tempo médio de jogo: ");
+                                    int tempoMedio = leitor.nextInt();
+                                    jogo.setAveragePlaytime(tempoMedio);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 16 -> {
+                                    System.out.println("[Update] -> Valor atual do tempo mediano de jogo: " + jogo.getMedianPlaytime());
+                                    System.out.print("[Update] -> Digite o novo tempo mediano de jogo: ");
+                                    int tempoMediano = leitor.nextInt();
+                                    jogo.setMedianPlaytime(tempoMediano);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 17 -> {
+                                    System.out.println("[Update] -> Valor atual dos proprietários: " + jogo.getOwners());
+                                    System.out.print("[Update] -> Digite o novo número de proprietários (\"min\"-\"max\"): ");
+                                    String proprietarios = leitor.next();
+                                    jogo.setOwners(proprietarios);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 18 -> {
+                                    System.out.println("[Update] -> Valor atual do preço: " + jogo.getPrice());
+                                    System.out.print("[Update] -> Digite o novo preço: ");
+                                    float preco = leitor.nextFloat();
+                                    jogo.setPrice(preco);
+                                    resp = true; //indicar que o registro foi atualizado
+                                }
+                                case 0 -> {
+                                    System.out.println("[Update] -> Voltando ao menu inicial...");
+                                    stop = true; //parar loop
+                                }
+                                default -> System.out.println("[Update] -> Opção inválida!");
+                            }
+
+                            //se algum elemento foi atualizado
+                            if (resp){
+                                try {
+                                    System.out.println("[Update] -> Atualizando o registro no arquivo...");
+
+                                    //mover o ponteiro para onde o registro estava antes de ser atualizado
+                                    arquivo.seek(pos_registro);
+
+                                    //identificar se o registro atualizado está maior (em BYTES) que o registro antigo
+                                    if (jogo.measureSize() > old_tamanho){
+                                        //mudar a lápide para indicar que o antigo registro deve ser desconsiderado
+                                        arquivo.writeByte(0xFF); //lapide inativa
+
+                                        //obter endereço do final do arquivo
+                                        long endereco = (arquivo.length() + 5);//endereço final + lápide(byte) + tamanho(int -> 4 bytes) do registro
+
+                                        //gravar o registro atualizado no final do arquivo
+                                        if (writeGame(arquivo, jogo)){
+
+                                            //atualizar os índices
+                                            if (DataBase.indexStatus > 0){
+                                                System.out.println("[Index] -> Atualizando endereço do registro no arquivo de índices...");
+                                                switch (DataBase.indexStatus) {
+                                                    case 1 -> {
+                                                        //atualizar na árvore b+
+                                                        if (!DataBase.arvore.update(new ArvoreElemento(jogo.getId(),endereco)))
+                                                            System.out.println("[ERRO] -> Não foi possível atualizar o registro no arquivo de índices da Árvore B+");
+                                                    }
+                                                    case 2 -> {
+                                                        //atualizar na hash extensível
+                                                        if (!DataBase.hash.update(new HashElemento(jogo.getId(),endereco)))
+                                                            System.out.println("[ERRO] -> Não foi possível atualizar o registro no arquivo de índices da Hash Extensível");
+                                                    }
+                                                    default -> {
+                                                        System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
+                                                        DataBase.indexStatus = 0; //medida preventiva
+                                                    }
+                                                }
+                                            }
+                                            atualizado = true;
+                                            System.out.println("[Update] -> Registro atualizado com sucesso");
+                                        }
+                                    } else{ //se o registro ter o tamanho igual ou menor, atualizar na mesma posição
+                                        try (ByteArrayOutputStream buffer = new ByteArrayOutputStream(); DataOutputStream bufferData = new DataOutputStream(buffer)){
+
+                                            //metadados
+                                            bufferData.writeByte(0x00); //lápide para indicar que registro está ativo (0xFF indica que está inativo)
+
+                                            //atualizar número de registros inativos
+                                            DataBase.totalDeleted++;
+                                            
+                                            bufferData.writeInt(jogo.measureSize());
+                                            
+                                            //dados
+                                            bufferData.writeInt(jogo.getId());
+                                            bufferData.writeInt(jogo.getAppid());
+                                            bufferData.writeUTF(jogo.getName());
+                                            bufferData.writeLong(jogo.getReleaseDateUnix());
+                                            bufferData.writeBoolean(jogo.getEnglish());
+                                            bufferData.writeUTF(jogo.getDeveloper());
+                                            bufferData.writeUTF(jogo.getPublisher());
+                                            bufferData.writeUTF(jogo.getPlatforms());
+                                            bufferData.writeInt(jogo.getRequiredAge());
+                            
+                                            //escrever lista de categorias
+                                            bufferData.writeInt(jogo.getCategories().size());//indicar tamanho da lista
+                                            for (String category : jogo.getCategories()) {
+                                                bufferData.writeUTF(category);//elementos da lista
+                                            }
+                            
+                                            //escrever lista de gêneros
+                                            bufferData.writeInt(jogo.getGenres().size());
+                                            for (String genre : jogo.getGenres()) {
+                                                bufferData.writeUTF(genre);
+                                            }
+                            
+                                            //ecrever lista de spytags
+                                            bufferData.writeInt(jogo.getSteamspyTags().size());
+                                            for (String tag : jogo.getSteamspyTags()) {
+                                                bufferData.writeUTF(tag);
+                                            }
+                            
+                                            bufferData.writeInt(jogo.getAchievements());
+                                            bufferData.writeInt(jogo.getPositiveRatings());
+                                            bufferData.writeInt(jogo.getNegativeRatings());
+                                            bufferData.writeInt(jogo.getAveragePlaytime());
+                                            bufferData.writeInt(jogo.getMedianPlaytime());
+                                            bufferData.writeUTF(jogo.getOwners());
+                                            bufferData.writeFloat(jogo.getPrice());
+                            
+                                            //escrever no arquivo os dados do buffer
+                                            arquivo.write(buffer.toByteArray());
+
+                                        }
+                                    }
+                                    
+                                } catch (IOException e) {
+                                    System.out.println("[ERRO] -> Não foi possível atualizar o registro do arquivo [" + e + "]");
+                                }
+                                resp = false;
+                            }
+
+                        } catch (InputMismatchException e){
+                            System.out.println("[ERRO] -> Valor digitado inválido para o atributo [" + e + "]");
                         }
                     }
-
+                }catch (InputMismatchException e){
+                    System.out.println("[ERRO] -> Não foi possível ler o valor digitado");
+                    System.out.println(e);
                 }
-
-                atual++;
-    
-            }
-            if (!achou){
+            } else{
                 System.out.println("\n[Update] -> Não foi possível localizar a ser atualizado.");
             }
         }

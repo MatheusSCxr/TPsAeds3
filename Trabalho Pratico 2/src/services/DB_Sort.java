@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.Scanner;
 import main.DataBase;
+import static main.DataBase.indexStatus;
 import models.HeapGame;
 import models.SteamGame;
 
@@ -29,6 +31,7 @@ public class DB_Sort {
         //comparator para ordenar por ID (crescente) ou nome (decrescente), priorizando o menor peso
         Comparator<HeapGame> comparator;
 
+        System.out.println("[Sort] -> Distribuindo registros nos caminhos (Etapa 1/2)...");
         if (tipo == 1){ //ordenar por ID
             comparator = (a, b) -> {
                 //se ambos têm peso, comparar pelo peso
@@ -227,7 +230,7 @@ public class DB_Sort {
 
             if (caminhos_validos > 1){
                 //intercalação própriamente dita
-                System.out.println("[Sort] -> Iniciando intercalação...");
+                System.out.println("[Sort] -> Iniciando intercalação (Etapa 2/2)...");
 
                 //atualizar variável de controle para mostrar o progresso
                 totalSegmentos = 0;
@@ -323,6 +326,56 @@ public class DB_Sort {
             DataBase.totalGames = total_registros;
             DataBase.totalDeleted = 0;
 
+            //remover indexação anterior ou indexar novamente
+            try {
+                Scanner leitor = new Scanner(System.in);
+                if (DataBase.indexStatus > 0){
+                    System.out.println("[INFO] -> Indexação detectada. Localizando arquivo de metadados...");
+                    File indexMetadados = new File("./src/resources/db_Index/indexMetadata.db");
+                    if (indexMetadados.exists()){
+                        System.out.println("[INFO] -> Arquivo de metadados da indexação encontrado");
+                        System.out.println("[INFO] -> Deseja realizar a indexação novamente?");
+                        System.out.println(" \n               [1] - SIM                   [0] - NÃO");
+                        System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                        int option = Integer.parseInt(leitor.nextLine());
+                        if (option == 1){
+                            try (RandomAccessFile metadados = new RandomAccessFile("./src/resources/db_Index/indexMetadata.db", "r")){
+                                metadados.seek(1);//pular byte to tipo de indexação
+                                int config =  metadados.readInt();
+                                //indexar novamente, de acordo com a indexação anterior
+                                switch (indexStatus) {
+                                    case 1 -> {
+                                        System.out.println("[Index] -> Indexando novamente para Árvore B+ [Ordem: " + config + " ]...");
+                                        DataBase.arvore = Index_ArvoreBMais.IndexDataBase(DataBase.arvore,config);
+                                    }
+                                    case 2 -> {
+                                        System.out.println("[Index] -> Indexando novamente para Hash Extensível [Tam. Cesto: " + config + " ]...");
+                                        DataBase.hash = Index_HashExtensivel.IndexDataBase(DataBase.hash, config);
+                                    }
+                                    case 3 -> {
+                                        
+                                    }
+                                    default -> System.out.println("[ERRO] -> Opção inválida");
+                                }
+                            }
+                        } else{
+                            System.out.println("[INFO] -> Removendo indexação anterior...");
+
+                            //remover arquivo de metadados e indexação
+                            indexMetadados.delete();
+                            DataBase.clearIndex();
+
+                            DataBase.indexStatus = 0;
+                        }
+                    }
+                    else{
+                        System.out.println("[ERRO] -> Não foi possível localizar o arquivo de metadados da indexação anterior");
+                        DataBase.indexStatus = 0;
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("[ERRO] -> Opção inválida");
+            }
             //fechar arquivo de entrada (antiga base de dados)
             entrada.close();
 

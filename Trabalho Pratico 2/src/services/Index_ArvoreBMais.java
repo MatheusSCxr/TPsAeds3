@@ -301,6 +301,142 @@ public class Index_ArvoreBMais<T extends RegistroArvoreBMais<T>> {
             return read1(elem, pa.filhos.get(i + 1));
     }
 
+
+    // Busca e Atualização recursiva por um elemento a partir da chave. Este metodo invoca
+    // o método recursivo update1, passando a raiz como referência.
+    // O método atualiza o elemento correspondente
+    public boolean update(T elem) throws Exception {
+
+        // Recupera a raiz da árvore
+        long raiz;
+        arquivo.seek(0);
+        raiz = arquivo.readLong();
+
+        // Executa a busca recursiva
+        if (raiz != -1)
+            return update1(elem, raiz);
+        else {
+            return false;
+        }
+    }
+
+    // Busca recursiva. Este método recebe a referência de uma página e busca
+    // pela chave na mesma. A busca continua pelos filhos, se houverem.
+    private boolean update1(T elem, long pagina) throws Exception {
+
+        // Como a busca é recursiva, a descida para um filho inexistente
+        // (filho de uma página folha) retorna um vetor vazio.
+        if (pagina == -1) {
+            return false;
+        }
+
+        // Reconstrói a página passada como referência a partir
+        // do registro lido no arquivo
+        arquivo.seek(pagina);
+        Pagina pa = new Pagina(construtor, ordem);
+        byte[] buffer = new byte[pa.TAMANHO_PAGINA];
+        arquivo.read(buffer);
+        pa.fromByteArray(buffer);
+
+        // Encontra o ponto em que a chave deve estar na página
+        // Nesse primeiro passo, todas as chaves menores que a chave buscada
+        // são ultrapassadas
+        int i = 0;
+        while (elem!=null && i < pa.elementos.size() && elem.compareTo(pa.elementos.get(i)) > 0) {
+            i++;
+        }
+
+        // Chave encontrada (ou pelo menos o ponto onde ela deveria estar).
+        // Segundo passo - testa se a chave é a chave buscada e se está em uma folha
+        // Obs.: em uma árvore B+, todas as chaves válidas estão nas folhas
+        if (i < pa.elementos.size() && pa.filhos.get(0) == -1 && (elem==null || elem.compareTo(pa.elementos.get(i)) == 0)) {
+
+            // Cria a lista de retorno e insere os elementos encontrados
+            boolean resp = false;
+            while (elem==null || elem.compareTo(pa.elementos.get(i)) <= 0) {
+
+                if (elem==null || elem.compareTo(pa.elementos.get(i)) == 0){
+                    // Escreve a página atualizada no arquivo
+                    pa.elementos.set(i, elem);
+                    arquivo.seek(pagina);
+                    arquivo.write(pa.toByteArray());
+                    resp = true;
+                }
+
+                i++;
+
+                // Se chegar ao fim da folha, então avança para a folha seguinte
+                if (i == pa.elementos.size()) {
+                    if (pa.proxima == -1)
+                        break;
+                    arquivo.seek(pa.proxima);
+                    arquivo.read(buffer);
+                    pa.fromByteArray(buffer);
+                    i = 0;
+                }
+            }
+            return resp;
+        }
+
+        // Terceiro passo - se a chave não tiver sido encontrada nesta folha,
+        // testa se ela está na próxima folha. Isso pode ocorrer devido ao
+        // processo de ordenação.
+        else if (i == pa.elementos.size() && pa.filhos.get(0) == -1) {
+
+            // Testa se há uma próxima folha. Nesse caso, retorna um vetor vazio
+            if (pa.proxima == -1) {
+                return false;
+            }
+
+            // Lê a próxima folha
+            arquivo.seek(pa.proxima);
+            arquivo.read(buffer);
+            pa.fromByteArray(buffer);
+
+            // Testa se a chave é a primeira da próxima folha
+            i = 0;
+            if (elem.compareTo(pa.elementos.get(i)) <= 0) {
+
+                // Cria a lista de retorno
+                boolean resp = false;
+
+                // Testa se a chave foi encontrada, e adiciona todas as chaves
+                // secundárias
+                while (elem.compareTo(pa.elementos.get(i)) <= 0) {
+                    if (elem.compareTo(pa.elementos.get(i)) == 0){
+                        // Escreve a página atualizada no arquivo
+                        pa.elementos.set(i, elem);
+                        arquivo.seek(pa.proxima);
+                        arquivo.write(pa.toByteArray());
+                        resp = true;
+                    }
+                    i++;
+                    if (i == pa.elementos.size()) {
+                        if (pa.proxima == -1)
+                            break;
+                        arquivo.seek(pa.proxima);
+                        arquivo.read(buffer);
+                        pa.fromByteArray(buffer);
+                        i = 0;
+                    }
+                }
+
+                return resp;
+            }
+
+            // Se não houver uma próxima página, retornar false
+            else {
+                return false;
+            }
+        }
+
+        // Chave ainda não foi encontrada, continua a busca recursiva pela árvore
+        if (elem==null || i == pa.elementos.size() || elem.compareTo(pa.elementos.get(i)) <= 0)
+            return update1(elem, pa.filhos.get(i));
+        else
+            return update1(elem, pa.filhos.get(i + 1));
+    }
+
     // Inclusão de novos elementos na árvore. A inclusão é recursiva. A primeira
     // função chama a segunda recursivamente, passando a raiz como referência.
     // Eventualmente, a árvore pode crescer para cima.
