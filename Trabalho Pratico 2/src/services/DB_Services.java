@@ -154,7 +154,7 @@ public class DB_Services {
                 //mostrar número de registros válidos encontrados
                 System.out.print("\r" + "[INFO] -> Lendo registros... [" + totalActive + "]");
             }
-            System.out.println("\n[INFO] -> Contagem finalizada.");
+            System.out.println("\n[INFO] -> Contagem finalizada");
         } catch (IOException e) {
             System.out.println("[ERRO] -> Não foi possível contar o número de registros");
             System.out.println(e);

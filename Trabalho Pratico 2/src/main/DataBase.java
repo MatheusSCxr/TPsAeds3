@@ -6,13 +6,52 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Scanner;
 import models.ArvoreElemento;
+import models.HashElemento;
 import services.*;
 
 public class DataBase {
     public static int totalGames; //variável de controle do número de registros ativos no banco de dados
     public static int totalDeleted; //variável de controle do número de registros inativos no banco de dados
     public static boolean hasData; //variável que indica se existe ou não um banco de dados
-    public static int indexStatus; //tipo de indexação atual 0 = nenhuma, 1 arvoreB+, 2 hash, 3 lista invertida.
+    public static short indexStatus; //tipo de indexação atual 0 = nenhuma, 1 arvoreB+, 2 hash, 3 lista invertida.
+    public static Index_ArvoreBMais<ArvoreElemento> arvore; //árvore para indexação
+    public static Index_HashExtensivel<HashElemento> hash; //hash para indexação
+
+    public static void clearIndex(){
+        System.out.println("[Index] Removendo índices antigos...");
+        try {
+            //fechar streams atualmente abertas
+            switch (indexStatus) {
+                case 1 -> {
+                    if (arvore != null){
+                        File file = new File("./src/resources/db_Index/arvoreBMais.db");
+                        if (file.exists()) {
+                            arvore.arquivo.close();
+                            file.delete();
+                        }
+                    }
+                }
+                case 2 -> {
+                    if (hash != null){
+                        File file = new File("./src/resources/db_Index/hash_diretorio.db");
+                        if (file.exists()) {
+                            hash.arqDiretorio.close();
+                            file.delete();
+                        }
+                        File file2 = new File("./src/resources/db_Index/hash_cestos.db");
+                        if (file2.exists()) {
+                            hash.arqCestos.close();
+                            file2.delete();
+                        }
+                    }
+                }
+                default -> System.out.println("[INFO] Não foram encontrados índices antigos");
+            }
+        } catch (Exception e) {
+            System.out.println("[ERRO] Não foi possível remover os índices anteriores");
+            System.out.println(e);
+        }
+    }
 
     public static void main(String[] args) {
         System.out.println("[INFO] -> Procurando base de dados...");
@@ -27,19 +66,46 @@ public class DataBase {
                 //contar a quantidade de jogos ativos e inativos (deletados) na base de dados
                 DB_Services.countGames(arquivo);
 
-                //indentificar indexação
-                File index_arvore = new File("./src/resources/db_Index/arvoreBMais.db");
-                if(index_arvore.exists()){
-                    indexStatus = 1;
-                }
-                else{
-                    File index_hash = new File("./src/resources/db_Index/hash.db");
-                    if(index_hash.exists()){
-                        indexStatus = 2;
+                //identificar a indexação atual
+                System.out.println("[INFO] -> Procurando arquivos de indexação...");
+
+                File indexMetadados = new File("./src/resources/db_Index/indexMetadata.db");
+                if (indexMetadados.exists()){
+                    try (RandomAccessFile metadados = new RandomAccessFile("./src/resources/db_Index/indexMetadata.db", "r")){
+                        indexStatus = metadados.readByte();
+                        int config =  metadados.readInt();
+
+                        //verificar compatibilidade com a quantidade de elementos
+                        try {
+                            //ler e inicializar indexação
+                            File indexArvore = new File("./src/resources/db_Index/arvoreBMais.db");
+                            File indexHash = new File("./src/resources/db_Index/hash_diretorio.db");
+            
+                            if (indexArvore.exists()) {
+
+                                //inicializar arvore
+                                arvore = new Index_ArvoreBMais<>(ArvoreElemento.class.getConstructor(), config, "./src/resources/db_Index/arvoreBMais.db");
+                                System.out.println("[INFO] -> Indexação por Árvore B+ detectada " + "[Ordem: " + config +"]");
+                            } else if (indexHash.exists()) {
+
+                                //inicializar hash
+                                hash = new Index_HashExtensivel<>(HashElemento.class.getConstructor(), config, "./src/resources/db_Index/hash_diretorio.db","./src/resources/db_Index/hash_cestos.db");  
+                                System.out.println("[INFO] -> Indexação por Hash Extensível detectada " + "[Tamanho do Cesto: " + config +"]");
+                        
+                            } else {
+                                indexStatus = 0;
+                                System.out.println("[INFO] -> Nenhum arquivo de indexação foi encontrado");
+                            }   
+                        } catch (Exception e) {
+                            System.out.println("[ERRO] -> Não foi possível recuperar o arquivo de indexação");
+                            System.out.println(e);
+                        }
+                    } catch (Exception e) {
+                        System.out.println("[ERRO] -> Não foi possível ler o arquivo de metadados da indexação");
                     }
-                    else{
-                        indexStatus = 0;
-                    }
+                } else {
+                    System.out.println("[INFO] -> Nenhum arquivo de metadados de indexação foi encontrado");
+                    indexStatus = 0;
                 }
             } catch (IOException e) {
                 System.out.println("[ERRO] -> Não foi possível abrir o arquivo da base de dados");
@@ -53,21 +119,14 @@ public class DataBase {
             hasData = false;
         }
 
-        //System.out.print("[Index] Digite a ordem da Árvore B+: ");
-        //int ordem = leitor.nextInt();
-        //arvore = new Index_ArvoreBMais<>(ArvoreElemento.class.getConstructor(), ordem, "./src/resources/db_Index/arvoreBMais.db");
-
         //exibir interface de menu com opções
         UI.menu(indexStatus,totalGames,totalDeleted);
         try (Scanner leitor = new Scanner(System.in)) {
             int choice = -1;
+
             while (choice != 0) {
                 //bloco try-catch para evitar que o programa encerre caso o scanner receba um valor inválido
                 try {
-                    //criar árvore acessível
-                    Index_ArvoreBMais<ArvoreElemento> arvore;
-                    arvore = new Index_ArvoreBMais<>(ArvoreElemento.class.getConstructor(), 5, "./src/resources/db_Index/arvoreBMais.db");
-
                     // 0 = encerrar programa
                     System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
                     choice = leitor.nextInt();
@@ -83,43 +142,63 @@ public class DataBase {
                         case 3 -> {
                             if (hasData){
                                 int tipo = 1;
-                                if(indexStatus == 0){
-                                    while(tipo != 0){
-                                        UI.search();
-                                        tipo = leitor.nextInt();
-                                        if (tipo != 0 && tipo < 4){
-                                            System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
-                                            leitor.nextLine(); //descartar caractere \n
-                                            String valor = leitor.nextLine();
-                                            DB_CRUD.searchGame(valor, tipo);
-                                            System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
-                                            System.out.println(" \n               [1] - SIM                   [0] - NÃO");
-                                            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                switch (indexStatus) {
+                                    case 0 -> {
+                                        while(tipo != 0){
+                                            UI.search();
                                             tipo = leitor.nextInt();
-                                        }
-                                        else if (tipo > 3){
-                                            System.out.println("[Search] -> Opção inválida.");
+                                            if (tipo != 0 && tipo < 4){
+                                                System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
+                                                leitor.nextLine(); //descartar caractere \n
+                                                String valor = leitor.nextLine();
+                                                DB_CRUD.searchGame(valor, tipo);
+                                                System.out.println("[Search] -> Pesquisa finalizada. Deseja realizar outra pesquisa?");
+                                                System.out.println(" \n               [1] - SIM                   [0] - NÃO");
+                                                System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                                tipo = leitor.nextInt();
+                                            }
+                                            else if (tipo > 3){
+                                                System.out.println("[Search] -> Opção inválida.");
+                                            }
                                         }
                                     }
-                                }
-                                else if (indexStatus == 1){
-                                    try {
-                                        System.out.print("\n[Search] -> Digite o ID do registro que deseja procurar na Árvore B+: ");
-                                        int id = leitor.nextInt();
-                                        // Ao passar o segundo valor como -1, ele funciona como um coringa
-                                        // de acordo com a implementação do método compareTo na classe
-                                        // ArvoreElemento
-                                        ArrayList<ArvoreElemento> lista = arvore.read(new ArvoreElemento(id, -1));
-                                        if (!lista.isEmpty() ){
-                                            System.out.println("Registro encontrado com sucesso: ");
-                                            for (int i = 0; i < lista.size(); i++)
-                                            DB_CRUD.readGame_Address(lista.get(i).getAdress()).printAll();
+                                    case 1 -> {
+                                        try {
+                                            System.out.print("\n[Search] -> Digite o ID do registro que deseja procurar na Árvore B+: ");
+                                            int id = leitor.nextInt();
+                                            // Ao passar o segundo valor como -1, ele funciona como um coringa
+                                            // de acordo com a implementação do método compareTo na classe
+                                            // ArvoreElemento
+                                            ArrayList<ArvoreElemento> lista = arvore.read(new ArvoreElemento(id, -1));
+                                            if (!lista.isEmpty() ){
+                                                System.out.println("Registro encontrado com sucesso: ");
+                                                for (int i = 0; i < lista.size(); i++)
+                                                    DB_CRUD.readGame_Address(lista.get(i).getAddress()).printAll();
+                                            }
+                                            else{
+                                                System.out.println("Não foi possível encontrar o registro na Árvore.");
+                                            }
+                                        } catch (Exception e) {
+                                            System.out.println(e);
                                         }
-                                        else{
-                                            System.out.println("Não foi possível encontrar o registro na Árvore.");
+                                    }
+                                    case 2 -> {
+                                        try {
+                                            System.out.print("\n[Search] -> Digite o ID do registro que deseja procurar na Hash: ");
+                                            int id = leitor.nextInt();
+                                            HashElemento registro = hash.read(HashElemento.hash(id));
+                                            if (registro != null ){
+                                                System.out.println("Registro encontrado com sucesso: ");
+                                                DB_CRUD.readGame_Address(registro.getAddress()).printAll();
+                                            }
+                                            else{
+                                                System.out.println("Não foi possível encontrar o registro na Hash.");
+                                            }
+                                        } catch (Exception e) {
+                                            System.out.println(e);
                                         }
-                                    } catch (Exception e) {
-                                        System.out.println(e);
+                                    }
+                                    default -> {
                                     }
                                 }
                             } else{
@@ -203,12 +282,32 @@ public class DataBase {
                         }
                         case 11 ->{
                             if (hasData){
-                                int tipo = 1;
                                 UI.indexar(indexStatus);
-                                tipo = leitor.nextInt();
-                                if (tipo == 1){
-                                    System.out.println("Iniciando indexação em Árvore B+...");
-                                    Index_ArvoreBMais.IndexDataBase(arvore);
+                                int tipo = leitor.nextInt();
+
+                                //limpar indices anteriores
+                                if (tipo > 0 && tipo < 4)
+                                    clearIndex();
+
+                                switch (tipo) {
+                                    case 1 -> {
+                                        System.out.print("[Index] -> Digite a ordem da Árvore B+: ");
+                                        int ordem = leitor.nextInt();
+                                        System.out.println("[Index] -> Iniciando indexação por Árvore B+...");
+                                        arvore = Index_ArvoreBMais.IndexDataBase(arvore,ordem);
+                                    }
+                                    case 2 -> {
+                                        System.out.print("[Index] -> Digite a quantidade de registros por cesto na Hash Extensível: ");
+                                        int quantDados = leitor.nextInt();
+                                        System.out.println("[Index] -> Iniciando indexação por Hash Extensível...");
+                                        hash = Index_HashExtensivel.IndexDataBase(hash,quantDados);
+                                    }
+                                    case 3 -> {
+
+                                    }
+                                    default -> {
+                                        System.out.println("[ERRO] -> Entrada inválida");
+                                    }
                                 }
                             } else{
                                 System.out.println("[ERRO] -> Não foi possível encontrar uma base de dados");
@@ -264,6 +363,8 @@ public class DataBase {
                 }
                 
             }
+        }catch(Exception e){
+            System.out.println(e);
         }
 
         System.out.println("[INFO] -> Programa encerrado.");

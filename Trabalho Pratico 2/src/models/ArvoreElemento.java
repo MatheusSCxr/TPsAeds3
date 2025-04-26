@@ -65,7 +65,7 @@ public class ArvoreElemento implements models.RegistroArvoreBMais<ArvoreElemento
     return this.num_id;
   }
 
-  public long getAdress(){
+  public long getAddress(){
     return this.num_endereco;
   }
 

@@ -29,7 +29,7 @@ public class Index_ArvoreBMais<T extends RegistroArvoreBMais<T>> {
     private int ordem; // Número máximo de filhos que uma página pode conter
     private int maxElementos; // Variável igual a ordem - 1 para facilitar a clareza do código
     private int maxFilhos; // Variável igual a ordem para facilitar a clareza do código
-    private RandomAccessFile arquivo; // Arquivo em que a árvore será armazenada
+    public RandomAccessFile arquivo; // Arquivo em que a árvore será armazenada
     private String nomeArquivo;
     private Constructor<T> construtor;
 
@@ -155,10 +155,12 @@ public class Index_ArvoreBMais<T extends RegistroArvoreBMais<T>> {
         nomeArquivo = na;
 
         // Abre (ou cria) o arquivo, escrevendo uma raiz empty, se necessário.
-        arquivo = new RandomAccessFile(nomeArquivo, "rw");
-        if (arquivo.length() < 16) {
-            arquivo.writeLong(-1); // raiz empty
-            arquivo.writeLong(-1); // pointeiro lista excluídos
+        if (o > 0){
+            arquivo = new RandomAccessFile(nomeArquivo, "rw");
+            if (arquivo.length() < 16) {
+                arquivo.writeLong(-1); // raiz empty
+                arquivo.writeLong(-1); // pointeiro lista excluídos
+            }
         }
     }
 
@@ -844,16 +846,22 @@ public class Index_ArvoreBMais<T extends RegistroArvoreBMais<T>> {
         }
     }
 
-    public static void IndexDataBase(Index_ArvoreBMais<ArvoreElemento> arvore){
+    public static Index_ArvoreBMais<ArvoreElemento> IndexDataBase(Index_ArvoreBMais<ArvoreElemento> oldArvore, int ordem){
         
         System.out.println("[Index] -> Indexando registros...");
         try (RandomAccessFile database = new RandomAccessFile("./src/resources/db_Output/gamesDB.db","r")) {
-            //excluir o arquivo existente, se existir
+            //excluir o arquivo antigo, se existir
             File file = new File("./src/resources/db_Index/arvoreBMais.db");
             if (file.exists()) {
+                if (oldArvore != null)
+                    oldArvore.arquivo.close();
                 file.delete();
             }
             
+            //criar nova arvore
+            Index_ArvoreBMais<ArvoreElemento> arvore;
+            arvore = new Index_ArvoreBMais<>(ArvoreElemento.class.getConstructor(), ordem, "./src/resources/db_Index/arvoreBMais.db");
+
             int conta = 0;
             if (database.length() != 0){
                 database.seek(0);
@@ -881,21 +889,33 @@ public class Index_ArvoreBMais<T extends RegistroArvoreBMais<T>> {
                         System.out.println(e);
                     }
                 }
+
                 //atualizar status de indexação do banco de dados
-                DataBase.indexStatus = 1;
+                try (RandomAccessFile metadados = new RandomAccessFile("./src/resources/db_Index/indexMetadata.db", "rw")){
+                    DataBase.indexStatus = 1;
+                    metadados.writeByte(1);
+                    metadados.writeInt(ordem);
+                } catch (Exception e){
+                    System.out.println("[ERRO] Não foi possível escrever os metadados da indexação atual");
+                }
+                
                 System.out.println("\n[Index] -> Base indexada com sucesso para Árvore B+ em (./src/resources/db_Index/arvoreBMais.db)");   
             }
             else{
                 System.out.println("[INFO] -> Não foi detectada um banco de dados em (./src/resources/db_Output/gamesDB.db)");
             }
-        } catch (IOException e) {
+
+            //retornar nova árvore
+            return arvore;
+
+        } catch (Exception e) {
                 System.out.println("[ERRO] -> Não foi possível indexar o banco de dados para Árvore B+");
+                System.out.println(e);
         }
+
+        //retornar null se falhar
+        return null;
     }
 
-    public static void Search(int ID){
-        Index_ArvoreBMais<ArvoreElemento> arvore;
-
-    }
 }
 

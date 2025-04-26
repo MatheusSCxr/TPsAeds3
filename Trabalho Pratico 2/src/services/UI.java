@@ -3,16 +3,16 @@ package services;
 import models.SteamGame;
 
 public class UI {
-    public static void menu(int indexStatus, int totalGames, int totalDeleted){
+    public static void menu(short indexStatus, int totalGames, int totalDeleted){
         System.out.println("\n----------------------- [ MENU ] -----------------------");
         System.out.print("Indexação atual -> ");
         switch (indexStatus) {
             case 1 -> System.out.print("[ Árvore B+ ]\n");
-            case 2 -> System.out.print("[ Hash Dinâmica ]\n");
+            case 2 -> System.out.print("[ Hash Extensível ]\n");
             case 3 -> System.out.print("[ Lista Invertida ]\n");
             default -> System.out.print("[ Nenhuma ]\n");
         }
-        System.out.println("Registros ativos -> [" + totalGames + "]        Registros inativos -> [" + totalDeleted + "]");
+        System.out.println("\nRegistros ativos -> [" + totalGames + "]        Registros inativos -> [" + totalDeleted + "]");
         System.out.println("[1] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId)");
         System.out.println("[2] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId)");
         System.out.println("[3] - Procurar por um atributo nos banco de dados [ID, appID, Nome]");
@@ -23,7 +23,7 @@ public class UI {
         System.out.println("[8] - Criar um backup do banco de dados atual");
         System.out.println("[9] - Restaurar um backup para o banco de dados atual");
         System.out.println("[10] - Imprimir em um arquivo todos os registros (ativos e inativos) do banco de dados (ID e Nome)");
-        System.out.println("[11] - Indexar");
+        System.out.println("[11] - Indexar por Árvore B+, Hash Extensível ou Lista Invertida");
         System.out.println("[101][ DEBUG ] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[107][ DEBUG ] - Ordenar o banco de dados por Nome [Aviso: LENTO]");
@@ -41,7 +41,7 @@ public class UI {
             default -> System.out.print("[ Nenhuma ]\n");
         }  
 
-        System.out.println("[1] - Indexar por Árvore B+");
+        System.out.println("\n[1] - Indexar por Árvore B+");
         System.out.println("[2] - Indexar por Hash Dinâmica");
         System.out.println("[3] - Indexar por Lista Invetida");
 
@@ -105,6 +105,8 @@ public class UI {
         //Update -> 4
         //Sort -> 5
         //Intercalação -> 6
+        //Imprimir -> 7
+        //Indexar -> 8
 
         //definir propoção/tamanho da barra
         int ratio = 50;
