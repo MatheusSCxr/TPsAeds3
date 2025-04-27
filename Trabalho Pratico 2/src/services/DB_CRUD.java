@@ -10,6 +10,7 @@ import java.util.Scanner;
 import main.DataBase;
 import models.ArvoreElemento;
 import models.HashElemento;
+import models.ListaElemento;
 import models.SteamGame;
 
 public class DB_CRUD {
@@ -445,7 +446,7 @@ public class DB_CRUD {
         return resp;
     }
 
-    public static boolean deleteGame(int delete_id){
+    public static boolean deleteGame(int delete_id, String categoria){
         //inicializar variáveis de pesquisa/deletar
         boolean achou = false;
         boolean resp = false;
@@ -456,7 +457,6 @@ public class DB_CRUD {
             switch (DataBase.indexStatus) {
                 case 0 -> {
                     //pesquisa sequencial
-
                     //estrutura útlimoId -> (lápide, tamanho do registro, dados)x N
                     //mover ponteiro para início do arquivo
                     arquivo.seek(0);
@@ -476,6 +476,7 @@ public class DB_CRUD {
                             arquivo.skipBytes(arquivo.readInt());
                         }
                         else{
+                            arquivo.skipBytes(4); //ignorar o tamanho e começar a leitura do registro
                             pos_registro = arquivo.getFilePointer();
                             jogo = readGame(arquivo);
                             if (jogo.getId() == delete_id){
@@ -526,7 +527,32 @@ public class DB_CRUD {
                     }
                 }
                 case 3 ->{
+                    //pesquisa na lista invertida
+                    try {
+                        //pegar todos os elementos da categoria
+                        ListaElemento[] resultado = DataBase.lista.read(categoria);
 
+                        //procura o ID exato dentro dessa lista
+                        ListaElemento registro = null;
+                        for (ListaElemento e : resultado) {
+                            if (e.getId() == delete_id) {
+                                registro = e;
+                                break;
+                            }
+                        }
+
+                        if (registro != null) {
+                            System.out.println("\n[Search] -> Registro encontrado na Lista Invertida:");
+                            jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
+                            pos_registro = registro.getAddress(); //obter endereço do registro
+                            achou = true;
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na categoria: '" + categoria + "' da Lista Invertida");
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
                 }
                 default -> {
                     System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
@@ -557,14 +583,15 @@ public class DB_CRUD {
                         switch (DataBase.indexStatus) {
                             case 1 -> {
                                 if (DataBase.arvore.delete(new ArvoreElemento(delete_id, -1)))
-                                    System.out.println("removido da árvore com sucesso");
+                                    System.out.println("[Delete] -> Removido da Árvore B+ com sucesso");
                             }
                             case 2 ->{
                                 if (DataBase.hash.delete(delete_id))
-                                    System.out.println("removido da hash com sucesso");
+                                    System.out.println("[Delete] -> Removido da Hash Extensivel com sucesso");
                             }
                             case 3 ->{
-                                
+                                if (DataBase.lista.delete(categoria, delete_id))
+                                    System.out.println("[Delete] -> Removido na categoria da Lista Invertida com sucesso");
                             }
                             default -> {}
                         }
@@ -596,7 +623,7 @@ public class DB_CRUD {
         return resp;
     }
     
-    public static boolean updateGame(int update_id) {
+    public static boolean updateGame(int update_id, String categoria) {
         //inicializar variáveis de pesquisa/deletar
         boolean achou = false;
         boolean atualizado = false;
@@ -655,7 +682,7 @@ public class DB_CRUD {
                             System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
                             for (int i = 0; i < lista.size(); i++){
                                 jogo = DB_CRUD.readGame_Address(lista.get(i).getAddress()); //obter o jogo
-                                pos_registro = lista.get(i).getAddress(); //obter endereço do registro
+                                pos_registro = lista.get(i).getAddress() - 1; //obter endereço do registro
 
                                 //obter tamanho do registro
                                 arquivo.seek(pos_registro - 4);
@@ -678,7 +705,7 @@ public class DB_CRUD {
                         if (registro != null ){
                             System.out.println("[Index] -> Registro encontrado com sucesso na Hash Extensível: ");
                             jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
-                            pos_registro = registro.getAddress(); //obter endereço do registro
+                            pos_registro = registro.getAddress() - 1; //obter endereço do registro
                             //obter tamanho do registro
                             arquivo.seek(pos_registro - 4);
                             old_tamanho = arquivo.readInt();
@@ -692,7 +719,35 @@ public class DB_CRUD {
                     }
                 }
                 case 3 ->{
+                    //pesquisa na lista invertida
+                    try {
+                        //pegar todos os elementos da categoria
+                        ListaElemento[] resultado = DataBase.lista.read(categoria);
 
+                        //procura o ID exato dentro dessa lista
+                        ListaElemento registro = null;
+                        for (ListaElemento e : resultado) {
+                            if (e.getId() == update_id) {
+                                registro = e;
+                                break;
+                            }
+                        }
+
+                        if (registro != null) {
+                            System.out.println("\n[Search] -> Registro encontrado na Lista Invertida:");
+                            jogo = DB_CRUD.readGame_Address(registro.getAddress()); //obter jogo
+                            pos_registro = registro.getAddress() - 1; //obter endereço do registro
+                            //obter tamanho do registro
+                            arquivo.seek(pos_registro - 4);
+                            old_tamanho = arquivo.readInt();
+                            achou = true;
+                        }
+                        else{
+                            System.out.println("Não foi possível encontrar o registro na categoria: '" + categoria + "' da Lista Invertida");
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e);
+                    }
                 }
                 default -> {
                     System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
@@ -947,6 +1002,11 @@ public class DB_CRUD {
                                                         //atualizar na hash extensível
                                                         if (!DataBase.hash.update(new HashElemento(jogo.getId(),endereco)))
                                                             System.out.println("[ERRO] -> Não foi possível atualizar o registro no arquivo de índices da Hash Extensível");
+                                                    }
+                                                    case 3 -> {
+                                                        //atualizar na categoria da Lista Invertida
+                                                        if (!DataBase.lista.update(categoria,jogo.getId(),endereco))
+                                                            System.out.println("[ERRO] -> Não foi possível atualizar o registro no arquivo de índices da categoria '" + categoria + "' da Lista Invertida");
                                                     }
                                                     default -> {
                                                         System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");

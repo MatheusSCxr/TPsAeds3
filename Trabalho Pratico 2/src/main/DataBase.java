@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import models.ArvoreElemento;
 import models.HashElemento;
+import models.ListaElemento;
 import services.*;
 
 public class DataBase {
@@ -16,9 +17,10 @@ public class DataBase {
     public static short indexStatus; //tipo de indexação atual 0 = nenhuma, 1 arvoreB+, 2 hash, 3 lista invertida.
     public static Index_ArvoreBMais<ArvoreElemento> arvore; //árvore para indexação
     public static Index_HashExtensivel<HashElemento> hash; //hash para indexação
+    public static Index_ListaInvertida lista;
 
     public static void clearIndex(){
-        System.out.println("[Index] Removendo índices antigos...");
+        System.out.println("[Index] -> Removendo índices antigos...");
         try {
             //fechar streams atualmente abertas
             switch (indexStatus) {
@@ -47,10 +49,25 @@ public class DataBase {
                         System.out.println("[Index] -> Indexação por Hash Extensível removida com sucesso");
                     }
                 }
-                default -> System.out.println("[INFO] Não foram encontrados índices antigos");
+                case 3 -> {
+                    if (lista != null){
+                        File file = new File("./src/resources/db_Index/lista_dicionario.db");
+                        if (file.exists()) {
+                            lista.arqDicionario.close();
+                            file.delete();
+                        }
+                        File file2 = new File("./src/resources/db_Index/lista_blocos.db");
+                        if (file2.exists()) {
+                            lista.arqBlocos.close();
+                            file2.delete();
+                        }
+                        System.out.println("[Index] -> Indexação por Lista Invertida removida com sucesso");
+                    }
+                }
+                default -> System.out.println("[INFO] -> Não foram encontrados índices antigos");
             }
         } catch (Exception e) {
-            System.out.println("[ERRO] Não foi possível remover os índices anteriores");
+            System.out.println("[ERRO] -> Não foi possível remover os índices anteriores");
             System.out.println(e);
         }
     }
@@ -82,6 +99,7 @@ public class DataBase {
                             //ler e inicializar indexação
                             File indexArvore = new File("./src/resources/db_Index/arvoreBMais.db");
                             File indexHash = new File("./src/resources/db_Index/hash_diretorio.db");
+                            File indexLista = new File("./src/resources/db_Index/lista_dicionario.db");
             
                             if (indexArvore.exists()) {
 
@@ -93,8 +111,11 @@ public class DataBase {
                                 //inicializar hash
                                 hash = new Index_HashExtensivel<>(HashElemento.class.getConstructor(), config, "./src/resources/db_Index/hash_diretorio.db","./src/resources/db_Index/hash_cestos.db");  
                                 System.out.println("[INFO] -> Indexação por Hash Extensível detectada " + "[Tamanho do Cesto: " + config +"]");
-                        
-                            } else {
+                            } else if (indexLista.exists()) {
+                                //inicializar lista invertida
+                                lista = new Index_ListaInvertida(config, "./src/resources/db_Index/lista_dicionario.db","./src/resources/db_Index/lista_blocos.db");  
+                                System.out.println("[INFO] -> Indexação por Hash Extensível detectada " + "[Tamanho do Bloco: " + config +"]");
+                            } else{
                                 indexStatus = 0;
                                 System.out.println("[INFO] -> Nenhum arquivo de indexação foi encontrado");
                             }   
@@ -171,11 +192,11 @@ public class DataBase {
                                             // Ao passar o segundo valor como -1, ele funciona como um coringa
                                             // de acordo com a implementação do método compareTo na classe
                                             // ArvoreElemento
-                                            ArrayList<ArvoreElemento> lista = arvore.read(new ArvoreElemento(id, -1));
-                                            if (!lista.isEmpty() ){
+                                            ArrayList<ArvoreElemento> listaArvore = arvore.read(new ArvoreElemento(id, -1));
+                                            if (!listaArvore.isEmpty() ){
                                                 System.out.println("[Index] -> Registro encontrado com sucesso na Árvore B+: ");
-                                                for (int i = 0; i < lista.size(); i++)
-                                                    DB_CRUD.readGame_Address(lista.get(i).getAddress()).printAll();
+                                                for (int i = 0; i < listaArvore.size(); i++)
+                                                    DB_CRUD.readGame_Address(listaArvore.get(i).getAddress()).printAll();
                                             }
                                             else{
                                                 System.out.println("Não foi possível encontrar o registro na Árvore.");
@@ -195,6 +216,39 @@ public class DataBase {
                                             }
                                             else{
                                                 System.out.println("Não foi possível encontrar o registro na Hash.");
+                                            }
+                                        } catch (Exception e) {
+                                            System.out.println(e);
+                                        }
+                                    }
+                                    case 3 -> {
+                                        try {
+                                            System.out.print("\n[Search] -> Digite o ID do registro que deseja procurar na Lista Invertida: ");
+                                            int id = leitor.nextInt();
+                                            leitor.nextLine(); // limpar buffer
+                                            System.out.print("\n[Search] -> Digite a Categoria do registro que deseja procurar na Lista Invertida: ");
+                                            String categoria = leitor.nextLine();
+                                            
+                                            //pegar todos os elementos da categoria
+                                            ListaElemento[] resultado = lista.read(categoria);
+
+                                            //procura o ID exato dentro dessa lista
+                                            ListaElemento registro = null;
+                                            for (ListaElemento e : resultado) {
+                                                if (e.getId() == id) {
+                                                    registro = e;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (registro != null) {
+                                                System.out.println("\n[Search] -> Registro encontrado na Lista Invertida:");
+                                                // A partir daqui, você já tem o endereco em registro.getEndereco()
+                                                // e pode chamar seu CRUD para carregar e imprimir o SteamGame completo:
+                                                DB_CRUD.readGame_Address(registro.getAddress()).printAll();
+                                            }
+                                            else {
+                                                System.out.println("\n[Search] -> Não foi possível encontrar o registro ID: " + id + " na categoria: '" + categoria + "'");
                                             }
                                         } catch (Exception e) {
                                             System.out.println(e);
@@ -230,7 +284,17 @@ public class DataBase {
                             if (hasData){
                                 System.out.print("[Delete] -> Insira o ID do jogo que deseja remover: ");
                                 int deleteID = leitor.nextInt();
-                                if (DB_CRUD.deleteGame(deleteID)){
+
+                                String categoria = null;
+
+                                //se for lista invertida, obter categoria
+                                if (indexStatus == 3){
+                                    leitor.nextLine(); //limpar buffer
+
+                                    System.out.print("[Delete] -> Insira a categoria do jogo que deseja excluir: ");
+                                    categoria = leitor.nextLine();
+                                }
+                                if (DB_CRUD.deleteGame(deleteID,categoria)){
                                     System.out.println("[Delete] -> Registro excluído com sucesso");
                                 }
                             } else{
@@ -241,7 +305,16 @@ public class DataBase {
                             if (hasData){
                                 System.out.print("[Update] -> Insira o ID do jogo que deseja atualizar: ");
                                 int updateID = leitor.nextInt();
-                                if (DB_CRUD.updateGame(updateID)){
+                                String categoria = null;
+
+                                //se for lista invertida, obter categoria
+                                if (indexStatus == 3){
+                                    leitor.nextLine(); //limpar buffer
+
+                                    System.out.print("[Update] -> Insira a categoria do jogo que deseja atualizar: ");
+                                    categoria = leitor.nextLine();
+                                }
+                                if (DB_CRUD.updateGame(updateID, categoria)){
                                     System.out.println("[Update] -> Registro atualizado com sucesso");
                                 }
                             } else{
@@ -315,7 +388,15 @@ public class DataBase {
                                         }
                                     }
                                     case 3 -> {
-
+                                        System.out.print("[Index] -> Digite a quantidade de registros por bloco (por categoria) na Lista Invertida: ");
+                                        int quantDados = leitor.nextInt();
+                                        if (quantDados < 1){
+                                            System.out.println("[ERRO] -> Quantidade de registros por bloco muito pequena ou inválida");
+                                        }
+                                        else{
+                                            System.out.println("[Index] -> Iniciando indexação por Lista Invertida...");
+                                            lista = Index_ListaInvertida.IndexDataBase(lista, quantDados);
+                                        }
                                     }
                                     default -> {
                                         System.out.println("[ERRO] -> Opção inválida");
