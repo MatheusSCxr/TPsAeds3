@@ -328,9 +328,52 @@ public class DB_CRUD {
             SteamGame jogo = new SteamGame();
 
             if (tipo == 1){
+                //obter o endereço do ponteiro no final do arquivo sequencial
+                long endereco = arquivo.length() + 5; //+5 pois 1 byte para a lápide e 4 bytes para o tamanho do endereço
+
                 if (writeGame(arquivo, jogo)){
                     jogo.printAll();
                     resp = true;
+
+                     //criar os índices
+                     if (DataBase.indexStatus > 0){
+                        System.out.println("[Index] -> Adicionando endereço do registro no arquivo de índices...");
+
+                        try {
+                            switch (DataBase.indexStatus) {
+                                case 1 -> {
+                                    //criar na árvore b+
+                                    if (!DataBase.arvore.create(new ArvoreElemento(jogo.getId(),endereco)))
+                                        System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da Árvore B+");
+                                }
+                                case 2 -> {
+                                    //criar na hash extensível
+                                    if (!DataBase.hash.create(new HashElemento(jogo.getId(),endereco)))
+                                        System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da Hash Extensível");
+                                }
+                                case 3 -> {
+                                    //abrir scanner
+                                    Scanner leitor = new Scanner(System.in);
+                                    //criar na categoria da Lista Invertida
+                                    System.out.print("\n[Search] -> Digite a Categoria do registro que deseja adicionar na Lista Invertida: ");
+                                    String categoria = leitor.nextLine();
+                                    if (!DataBase.lista.create(categoria, new ListaElemento(jogo.getId(), endereco))) //adiciona jogo na lista
+                                        System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da categoria '" + categoria + "' da Lista Invertida");
+                                    else{
+                                        //incrementar entidades
+                                        DataBase.lista.incrementaEntidades();
+                                    } 
+                                }
+                                default -> {
+                                    System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
+                                    DataBase.indexStatus = 0; //medida preventiva
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices");
+                            System.out.println(e);
+                        }
+                    }
                 }
             }
             else{
@@ -430,10 +473,56 @@ public class DB_CRUD {
                     System.out.print("\n[Create] -> Digite o preço do jogo: ");
                     valor = leitor.nextLine();
                     jogo.setPrice(Float.parseFloat(valor));
+
+                    //obter o endereço do ponteiro no final do arquivo sequencial
+                    long endereco = arquivo.length() + 5; //+5 pois 1 byte para a lápide e 4 bytes para o tamanho do endereço
+
                     //escrever jogo no arquivo
-                    writeGame(arquivo, jogo);
-                    jogo.printAll();
-                    resp = true;
+                    if (writeGame(arquivo, jogo)){
+                        jogo.printAll();
+                        resp = true;
+    
+                        //criar os índices
+                        if (DataBase.indexStatus > 0){
+                            System.out.println("[Index] -> Adicionando endereço do registro no arquivo de índices...");
+    
+                            try {
+                                switch (DataBase.indexStatus) {
+                                    case 1 -> {
+                                        //criar na árvore b+
+                                        if (!DataBase.arvore.create(new ArvoreElemento(jogo.getId(),endereco)))
+                                            System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da Árvore B+");
+                                    }
+                                    case 2 -> {
+                                        //criar na hash extensível
+                                        if (!DataBase.hash.create(new HashElemento(jogo.getId(),endereco)))
+                                            System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da Hash Extensível");
+                                    }
+                                    case 3 -> {
+                                        //criar na categoria da Lista Invertida
+                                        System.out.print("\n[Search] -> Digite a Categoria do registro que deseja adicionar na Lista Invertida: ");
+                                        String categoria = leitor.nextLine();
+                                        if (!DataBase.lista.create(categoria, new ListaElemento(jogo.getId(), endereco))) //adiciona jogo na lista
+                                            System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices da categoria '" + categoria + "' da Lista Invertida");
+                                        else{
+                                            //incrementar entidades
+                                            DataBase.lista.incrementaEntidades();
+                                        } 
+                                    }
+                                    default -> {
+                                        System.out.println("[ERRO Crítico!!!] -> Indexação atual inválida");
+                                        DataBase.indexStatus = 0; //medida preventiva
+                                    }
+                                }
+                            } catch (Exception e) {
+                                System.out.println("[ERRO] -> Não foi possível criar o registro no arquivo de índices");
+                                System.out.println(e);
+                            }
+                        }
+                    }
+                    else {
+                        resp = false;
+                    }
                 } catch (InputMismatchException e){
                     System.out.println("[ERRO] -> Não foi possível ler o valor digitado");
                     System.out.println(e);

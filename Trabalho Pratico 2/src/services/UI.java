@@ -43,7 +43,7 @@ public class UI {
 
         System.out.println("\n[1] - Indexar por Árvore B+");
         System.out.println("[2] - Indexar por Hash Extensível");
-        System.out.println("[3] - Indexar por Lista Invetida");
+        System.out.println("[3] - Indexar por Lista Invertida");
 
         System.out.println("\n[0] - Voltar ao MENU");
         System.out.println("--------------------------------------------------------");
