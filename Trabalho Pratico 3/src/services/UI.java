@@ -146,7 +146,7 @@ public class UI {
                 barra.append("   Procurando registro: ").append(atual - 1).append(" de ").append(total - 1).append("\t");
             }
             case 5 -> {
-                barra.append("   Dividindo Registros -> Byte: ").append(atual).append(" de ").append(total);
+                barra.append("   Percorrendo -> Byte: ").append(atual).append(" de ").append(total);
             }
             case 6 ->{
                 if (tempo_restante < 0)

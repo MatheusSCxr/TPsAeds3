@@ -2,62 +2,55 @@ package models;
 
 import java.util.BitSet;
 
+//classe auxiliar usada nos métodos de compressão
 public class VetorDeBits {
-    private BitSet vetor;
-    
-    public VetorDeBits() {
-        vetor = new BitSet();
-        vetor.set(0);
+    private BitSet bitSet;
+    private int length;
+
+    public VetorDeBits(int length) {
+        this.bitSet = new BitSet(length);
+        this.length = length;
     }
 
-    public VetorDeBits(int n) {
-        vetor = new BitSet(n);
-        vetor.set(n);
+    public VetorDeBits(byte[] bytes) {
+        this.bitSet = BitSet.valueOf(bytes);
+        this.length = bytes.length * 8;
     }
 
-    public VetorDeBits(byte[] v) {
-        vetor = BitSet.valueOf(v);
-    }
-
-    public byte[] toByteArray() {
-        return vetor.toByteArray();
-    }
-
-    public void set(int i) {
-        if(i>=vetor.length()-1) {
-            vetor.clear(vetor.length()-1);
-            vetor.set(i+1);
+    public void set(int index) {
+        if (index >= length) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length);
         }
-        vetor.set(i);
+        bitSet.set(index);
     }
 
-    public void clear(int i) {
-        if(i>=vetor.length()-1) {
-            vetor.clear(vetor.length()-1);
-            vetor.set(i+1);
+    public void clear(int index) {
+        if (index >= length) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length);
         }
-        vetor.clear(i);
+        bitSet.clear(index);
     }
 
-    public boolean get(int i) {
-        return vetor.get(i);
+    public boolean get(int index) {
+        if (index >= length) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length);
+        }
+        return bitSet.get(index);
     }
 
     public int length() {
-        return vetor.length()-1;
+        return length;
     }
 
-    public int size() {
-        return vetor.size();
-    }
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(int i=0; i<vetor.length()-1; i++)
-            if(vetor.get(i))
-                sb.append('1');
-            else
-                sb.append('0');
-        return sb.toString();
+    //converter para array de bytes
+    public byte[] toByteArray() {
+        int numBytes = (length + 7) / 8; //garantir que seja multiplo de 8
+        byte[] bytes = bitSet.toByteArray();
+        if (bytes.length < numBytes) {
+            byte[] newBytes = new byte[numBytes];
+            System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+            return newBytes;
+        }
+        return bytes;
     }
 }

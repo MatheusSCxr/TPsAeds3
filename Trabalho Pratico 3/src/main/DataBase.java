@@ -413,7 +413,10 @@ public class DataBase {
                             int compressao = leitor.nextInt();
                             if (compressao == 1){
                                 System.out.println("[Comp] -> Preparando para comprimir usando LZW...");
-                                Compress_LZW.compress_DataBase();
+                                LZW.compress_DataBase();
+
+                                //debug. Será retirado em breve
+                                LZW.decompress_DataBase();
                             }
                         }
                         case 101 -> {
@@ -456,7 +459,7 @@ public class DataBase {
 
 
                 } catch (Exception e){
-                    System.out.println("[ERRO] -> Não foi possível ler a opção digitada [" + e + "]");
+                    System.out.println("[ERRO] -> [" + e + "]");
 
                     //limpar buffer do scanner
                     leitor.nextLine();
