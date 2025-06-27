@@ -78,6 +78,7 @@ public class DB_Services {
             System.out.println(e);
         }
     }
+    
     //imprime os atributos ID e Nome de todos os elementos, ativos e inativos, de um banco de dados
     public static void printDataBase(){
         System.out.println("[Print] -> Imprimindo registros...");

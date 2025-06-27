@@ -13,7 +13,7 @@ import models.VetorDeBits;
  **/
 
 public class LZW {
-    public static final int BITS_POR_INDICE = 11; // Mínimo de 9 bits por índice (512 itens no dicionário). Atualemente, 11 é o mais adequado para a base de dados usada nesse projeto.
+    public static final int BITS_POR_INDICE = 10; // Mínimo de 9 bits por índice (512 itens no dicionário). Atualemente, 10 é o mais adequado para a base de dados usada nesse projeto.
     public static final int BLOCK_SIZE = 8192; // Tamanho fixo dos blocos que serão comprimidos
     public static ArrayList<ArrayList<Byte>> dicionarioCompressao;
     public static ArrayList<ArrayList<Byte>> dicionarioDESCompressao;
@@ -25,6 +25,9 @@ public class LZW {
         if (compressedFile.exists())
             compressedFile.delete();
 
+        //contar tempo da compressão
+        long tempo_inicio = System.currentTimeMillis();
+            
         //ler a base de dados e iniciar compresssão
         try (RandomAccessFile compressed = new RandomAccessFile(compressedFile, "rw"); RandomAccessFile database = new RandomAccessFile("./src/resources/db_Output/gamesDB.db", "r")) {
 
@@ -49,8 +52,19 @@ public class LZW {
                 compressed.write(compressedData);//escrever o bloco comprimido
 
                 processedBytes += blockSize + 2;//contabilizar
-                UI.progressBar((int)processedBytes,(int)totalBytes,"[Compress]",5,0);//barra de progresso
+                UI.progressBar((int)processedBytes,(int)totalBytes,"[Comp]",5,0);//barra de progresso
             }
+
+            //contar tempo total da compressão
+            long tempo_fim = System.currentTimeMillis();
+            long tempo = (tempo_fim - tempo_inicio); // dividir por 1000 para contar em segundos
+
+            System.out.println("\n[Comp] -> Comprimido com sucesso! (\"./src/resources/db_compress/LZWCompressed_DB.db\")");
+            System.out.println("[Comp] -> Tamanho arquivo original: " + totalBytes + "B \t Tamanho arquivo comprimido: " + compressed.length() +"B");
+            double taxaCompressao = 100 * ((double) compressed.length() / totalBytes);//taxa de compressão
+            float porcentagemDicio = 100 * (float)(dicionarioCompressao.size() / Math.pow(2, BITS_POR_INDICE));
+            System.out.println("[Comp] -> Taxa de compressão: " + String.format("%.2f", taxaCompressao) + "% \t Tamanho do dicionário: " + dicionarioCompressao.size() + " [" + String.format("%.2f", porcentagemDicio) + "%] Tempo decorrido: " + tempo/1000.0 + "s");
+
         }
     }
 
@@ -66,8 +80,7 @@ public class LZW {
         if (decompressedFile.exists())
             decompressedFile.delete();
 
-        try (RandomAccessFile compressed = new RandomAccessFile(compressedFile, "r");
-                RandomAccessFile decompressed = new RandomAccessFile(decompressedFile, "rw")) {
+        try (RandomAccessFile compressed = new RandomAccessFile(compressedFile, "r"); RandomAccessFile decompressed = new RandomAccessFile(decompressedFile, "rw")) {
 
             //copiar último ID
             decompressed.writeInt(compressed.readInt());
@@ -90,7 +103,7 @@ public class LZW {
                 decompressed.write(originalData);//escrever bloco descomprimido
                 processedBytes += compressedSize;//contabilizar
 
-                UI.progressBar((int)processedBytes,(int)totalBytes,"[DeCompress]",5,0);//barra de progresso
+                UI.progressBar((int)processedBytes,(int)totalBytes,"[DEComp]",5,0);//barra de progresso
             }
         }
     }

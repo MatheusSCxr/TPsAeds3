@@ -171,7 +171,7 @@ public class DataBase {
                                             UI.search();
                                             tipo = leitor.nextInt();
                                             if (tipo != 0 && tipo < 4){
-                                                System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar nos registros: ");
+                                                System.out.print("\n[Search] -> Digite o valor do atributo que deseja procurar: ");
                                                 leitor.nextLine(); //descartar caractere \n
                                                 String valor = leitor.nextLine();
                                                 DB_CRUD.searchGame(valor, tipo);
@@ -180,7 +180,14 @@ public class DataBase {
                                                 System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
                                                 tipo = leitor.nextInt();
                                             }
-                                            else if (tipo > 3){
+                                            //casamento de padrão
+                                            else if (tipo == 4 || tipo == 5){
+                                                System.out.print("\n[Search] -> Digite o padrão que deseja procurar: ");
+                                                leitor.nextLine(); //descartar caractere \n
+                                                String valor = leitor.nextLine();
+                                                DB_CRUD.searchGame(valor, tipo);
+                                            }
+                                            else{
                                                 System.out.println("[Search] -> Opção inválida.");
                                             }
                                         }
@@ -408,15 +415,30 @@ public class DataBase {
                         }
                         case 12 -> {                                  
                             System.out.println("[Comp] -> Escolha uma das opções de compressão:\n");
-                            System.out.println("       [1] - LZW       [2] - HUFFMAN       [3] - LZW & HUFFMAN");
+                            System.out.println("       [1] - LZW       [2] - HUFFMAN");
                             System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
                             int compressao = leitor.nextInt();
                             if (compressao == 1){
                                 System.out.println("[Comp] -> Preparando para comprimir usando LZW...");
                                 LZW.compress_DataBase();
-
-                                //debug. Será retirado em breve
+                            }
+                            if (compressao == 2){
+                                System.out.println("[Comp] -> Preparando para comprimir usando Huffman...");
+                                Huffman.compress_DataBase();
+                            }
+                        }
+                        case 13 -> {                                  
+                            System.out.println("[Comp] -> Escolha uma das opções de descompressão:\n");
+                            System.out.println("       [1] - LZW       [2] - HUFFMAN");
+                            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                            int compressao = leitor.nextInt();
+                            if (compressao == 1){
+                                System.out.println("[DEComp] -> Preparando para descomprimir usando LZW...");
                                 LZW.decompress_DataBase();
+                            }
+                            if (compressao == 2){
+                                System.out.println("[DEComp] -> Preparando para descomprimir usando Huffman...");
+                                Huffman.decompress_DataBase();
                             }
                         }
                         case 101 -> {

@@ -293,9 +293,48 @@ public class DB_CRUD {
                             }
                         }
                         case 3 -> {
+                            //força bruta
                             if (jogo.getName().toLowerCase().compareTo(valor.toLowerCase()) == 0){
                                 achou = true;
                                 System.out.println("Registro com o nome encontrado!");
+                            }
+                        }
+                        case 4 -> {
+                            //KMP
+                            String texto = jogo.toString();
+                            ArrayList<Integer> kmp = KMP.search(valor, texto);
+                            if (kmp.size() > 0){
+                                System.out.println("[Search] -> Padrão encontrado " + kmp.size() + " vez(es) no Registro de ID " + jogo.getId());
+                                System.out.print("[Search] -> Posições: ");
+                                for (int i = 0; i < kmp.size(); i++) 
+                                    System.out.print(kmp.get(i) + " ");
+                                System.out.println();
+                                jogo.printAll();
+                                System.out.println("\n[Search] -> Continuar pesquisa? [1] SIM     [0] NÃO");
+                                System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                Scanner leitor = new Scanner(System.in);
+                                int resp = leitor.nextInt();
+                                if (resp == 0)
+                                    achou = true;
+                            }
+                        }
+                        case 5 -> {
+                            //Boyer Moore
+                            String texto = jogo.toString();
+                            ArrayList<Integer> boyerM = BoyerMoore.search(valor, texto);
+                            if (boyerM.size() > 0){
+                                System.out.println("[Search] -> Padrão encontrado " + boyerM.size() + " vez(es) no Registro de ID " + jogo.getId());
+                                System.out.print("[Search] -> Posições: ");
+                                for (int i = 0; i < boyerM.size(); i++) 
+                                    System.out.print(boyerM.get(i) + " ");
+                                System.out.println();
+                                jogo.printAll();
+                                System.out.println("\n[Search] -> Continuar pesquisa? [1] SIM     [0] NÃO");
+                                System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                                Scanner leitor = new Scanner(System.in);
+                                int resp = leitor.nextInt();
+                                if (resp == 0)
+                                    achou = true;
                             }
                         }
                         default -> System.out.println("[ERRO] -> Opção de pesquisa inválida.");
@@ -307,10 +346,10 @@ public class DB_CRUD {
             //imprimir informações do jogo encontrado
             if (achou){
                 jogo.printAll();
-                System.out.println("[Search] -> Registro encontrado!");
+                System.out.println("[Search] -> Pesquisa Finalizada.");
             }
             else{
-                System.out.println("\n[Search] -> Não foi possível localizar o registro.");
+                System.out.println("\n[Search] -> Não foi possível encontrar o valor na base de dados.");
             }
         } catch (IOException e) {
             System.out.println("Erro ao pesquisar o registro!");

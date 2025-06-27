@@ -24,6 +24,8 @@ public class UI {
         System.out.println("[9] - Restaurar um backup para o banco de dados atual");
         System.out.println("[10] - Imprimir em um arquivo todos os registros (ativos e inativos) do banco de dados (ID e Nome)");
         System.out.println("[11] - Indexar por Árvore B+, Hash Extensível ou Lista Invertida");
+        System.out.println("[12] - Comprimir o banco de dados (LZW ou Huffman)");
+        System.out.println("[13] - Descomprimir o banco de dados compactado (LZW ou Huffman)");
         System.out.println("[101][ DEBUG ] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[107][ DEBUG ] - Ordenar o banco de dados por Nome [Aviso: LENTO]");
@@ -56,6 +58,8 @@ public class UI {
         System.out.println("[1] - Pesquisar pelo ID");
         System.out.println("[2] - Pesquisar pelo appId");
         System.out.println("[3] - Pesquisar pelo nome");
+        System.out.println("[4] - KMP - Casamento de Padrões");
+        System.out.println("[5] - Boyer Moore - Casamento de Padrões");
         System.out.println("\n[0] - Voltar ao menu principal");
         System.out.println("--------------------------------------------------------");
 

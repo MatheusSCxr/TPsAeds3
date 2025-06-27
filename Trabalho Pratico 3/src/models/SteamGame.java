@@ -340,5 +340,29 @@ public class SteamGame {
         System.out.println("Preço: " + price);
         System.out.println("----------------------------------------------------");
     }
+
+    //método toString para fazer o casamento de padrão
+    @Override
+    public String toString() {
+        return id + ";" +
+            appid + ";" +
+            name + ";" +
+            release_date + ";" +
+            english + ";" +
+            developer + ";" +
+            publisher + ";" +
+            platforms + ";" +
+            required_age + ";" +
+            String.join(",", categories) + ";" +
+            String.join(",", genres) + ";" +
+            String.join(",", steamspy_tags) + ";" +
+            achievements + ";" +
+            positive_ratings + ";" +
+            negative_ratings + ";" +
+            average_playtime + ";" +
+            median_playtime + ";" +
+            owners + ";" +
+            price;
+    }
 }
 
