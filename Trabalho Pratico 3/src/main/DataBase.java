@@ -3,6 +3,7 @@ package main;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Scanner;
 import models.ArvoreElemento;
@@ -440,6 +441,44 @@ public class DataBase {
                                 System.out.println("[DEComp] -> Preparando para descomprimir usando Huffman...");
                                 Huffman.decompress_DataBase();
                             }
+                        }
+                        case 14 -> { 
+                            System.out.println("[Encrypt] -> Escolha uma das opções de criptofrafia:\n");
+                            System.out.println("       [1] - Simples (offset)       [2] - RSA");
+                            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                            int criptografia = leitor.nextInt();
+                            if (criptografia == 1){//SIMPLES
+                                System.out.print("[Encrypt] -> Digite o offset: ");
+                                int offset = leitor.nextInt();
+                                if (offset > 0){
+                                    System.out.println("[Encrypt] -> Preparando para criptografar usando offset [" + offset +"]...");
+                                    EncryptSimple.EncryptDataBase(offset);
+                                }
+                            }
+                            if (criptografia == 2){//RSA
+                                System.out.println("[Encrypt] -> Preparando para criptografar usando RSA...");
+                                EncryptRSA.EncryptDataBase();
+                            }                                 
+                        }
+                        case 15 -> {
+                            System.out.println("[Decrypt] -> Escolha uma das opções de descriptofrafia:\n");
+                            System.out.println("       [1] - Simples (offset)       [2] - RSA");
+                            System.out.print("\n[Escolha] -> Digite o número de uma das opções acima: ");
+                            int descriptografia = leitor.nextInt();
+                            if (descriptografia == 1){//SIMPLES
+                                System.out.print("[Decrypt] -> Digite o offset: ");
+                                int offset = leitor.nextInt();
+                                if (offset > 0){
+                                    System.out.println("[Decrypt] -> Preparando para descriptografar usando offset [" + offset +"]...");
+                                    EncryptSimple.DecryptDataBase(offset);
+                                }
+                            }
+                            if (descriptografia == 2){//RSA
+                                System.out.print("[Decrypt] -> Digite a chave privada: ");
+                                BigInteger d = leitor.nextBigInteger();
+                                System.out.println("[Decrypt] -> Preparando para descriptografar usando RSA...");
+                                EncryptRSA.DecryptDataBase(d);
+                            }                                   
                         }
                         case 101 -> {
                             DB_Debug.csvExtractAll();

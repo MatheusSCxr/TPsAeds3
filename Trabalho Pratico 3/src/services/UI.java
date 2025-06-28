@@ -26,6 +26,8 @@ public class UI {
         System.out.println("[11] - Indexar por Árvore B+, Hash Extensível ou Lista Invertida");
         System.out.println("[12] - Comprimir o banco de dados (LZW ou Huffman)");
         System.out.println("[13] - Descomprimir o banco de dados compactado (LZW ou Huffman)");
+        System.out.println("[14] - Criptografar o banco de dados (Offset ou RSA)");
+        System.out.println("[15] - Descriptografar o banco de dados (Offset ou RSA)");
         System.out.println("[101][ DEBUG ] - Carregar banco de dados com todos os registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[102][ DEBUG ] - Carregar banco de dados com N registros do CSV (primeiro -> último; Já ordenado por appId) [Aviso: LENTO]");
         System.out.println("[107][ DEBUG ] - Ordenar o banco de dados por Nome [Aviso: LENTO]");
