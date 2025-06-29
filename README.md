@@ -117,4 +117,4 @@ git clone https://github.com/MatheusSCxr/TPsAeds3.git
   
 ## Créditos
 - Parte dos códigos de **Indexação e Compactação** foram adaptados do repositório do [Professor Marcos Kutova](https://github.com/kutova/AEDsIII)
-- Parte dos códigos de **Casamento de Padrões** foram adaptados do [Site GeekForGeeks](https://www.geeksforgeeks.org/) 
+- Parte dos códigos de **Casamento de Padrões** foram adaptados do [WebSite GeeksForGeeks](https://www.geeksforgeeks.org/) 
