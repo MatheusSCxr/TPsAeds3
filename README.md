@@ -108,7 +108,7 @@ O projeto está organizado em quatro etapas (TPs) principais.
 ## Como Executar
 1. Clonar o repositório:
 ```bash
-git clone https://github.com/MatheusSCxr/TPSAeds3.git
+git clone https://github.com/MatheusSCxr/TPsAeds3.git
 ```
 2. Compilar e Executar a classe "DataBase.java" na pasta "main" de cada TP.
 
